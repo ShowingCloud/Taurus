@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="zh_CN">
+<!DOCTYPE TS>
+<TS version="2.0" language="zh_CN">
 <context>
     <name></name>
     <message>
@@ -245,27 +246,27 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Frontend/mainwindow.py" line="134"/>
         <source>Lost connection to server. Exiting...</source>
-        <translation type="unfinished"></translation>
+        <translation>与服务器失去连接。程序将退出……</translation>
     </message>
     <message>
         <location filename="Frontend/mainwindow.py" line="458"/>
         <source>Please input output filename</source>
-        <translation type="unfinished"></translation>
+        <translation>请输入需要输出的文件名</translation>
     </message>
     <message>
         <location filename="Frontend/mainwindow.py" line="462"/>
         <source>Filename too long.</source>
-        <translation type="unfinished"></translation>
+        <translation>文件名太长了。</translation>
     </message>
     <message>
         <location filename="Frontend/mainwindow.py" line="467"/>
         <source>Please input output path</source>
-        <translation type="unfinished"></translation>
+        <translation>请输入需要输出的文件夹</translation>
     </message>
     <message>
         <location filename="Frontend/mainwindow.py" line="571"/>
         <source>Movie title too long.</source>
-        <translation type="unfinished"></translation>
+        <translation>片头标题太长了。</translation>
     </message>
 </context>
 <context>
@@ -291,12 +292,12 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Frontend/newconvert.py" line="20"/>
         <source>New Transcode Task</source>
-        <translation type="unfinished"></translation>
+        <translation>新建转码任务</translation>
     </message>
     <message>
         <location filename="Frontend/newconvert.py" line="84"/>
         <source>Please input output path</source>
-        <translation type="unfinished"></translation>
+        <translation>请输入需要输出的文件夹</translation>
     </message>
 </context>
 <context>
@@ -317,7 +318,7 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Frontend/savesplit.py" line="51"/>
         <source>Filename too long.</source>
-        <translation type="unfinished"></translation>
+        <translation>文件名太长了。</translation>
     </message>
 </context>
 <context>
@@ -374,7 +375,7 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Backend/videomerger.py" line="110"/>
         <source>Save destination invalid.</source>
-        <translation type="unfinished">保存地址不可用。</translation>
+        <translation>保存地址不可用。</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="106"/>
@@ -404,7 +405,7 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Backend/videomerger.py" line="69"/>
         <source>Media type not compatible.</source>
-        <translation type="unfinished"></translation>
+        <translation>媒体类型不匹配。</translation>
     </message>
 </context>
 <context>

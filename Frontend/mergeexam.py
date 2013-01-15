@@ -36,23 +36,19 @@ class MergeExam (QtGui.QDialog):
 
 		self.player = Player (self.windowId, self.ui.Sliderprogress.minimum(), self.ui.Sliderprogress.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
 
-		self.ui.buttonplayerplay.clicked.connect (self.player.playclicked)
-		self.ui.buttonplayerstop.clicked.connect (self.player.stopclicked)
-		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclicked)
-		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclicked)
-		self.ui.buttonvolume.clicked.connect (self.player.muteornot)
-		self.ui.Sliderprogress.valueChanged.connect (self.player.sliderseekvalue)
-		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevalue)
+		self.ui.buttonplayerplay.clicked.connect (self.player.playclickedsignal)
+		self.ui.buttonplayerstop.clicked.connect (self.player.stopclickedsignal)
+		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclickedsignal)
+		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclickedsignal)
+		self.ui.buttonvolume.clicked.connect (self.player.muteornotsignal)
+		self.ui.Sliderprogress.valueChanged.connect (self.player.sliderseekvaluesignal)
+		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevaluesignal)
 
-		self.player.playurisignal.connect (self.player.playuri)
 		self.player.updatelabelduration.connect (self.updatelabelduration)
 		self.player.updatesliderseek.connect (self.updatesliderseek)
 		self.player.updateslidervolume.connect (self.updateslidervolume)
 		self.player.setbuttonplay.connect (self.playersetbuttonplay)
 		self.player.setbuttonpause.connect (self.playersetbuttonpause)
-
-		self.player.quitworkersignal.connect (self.player.quitworker)
-		self.player.quitworkersignal.connect (self.player.deleteLater)
 
 		self.player.startworker()
 		self.player.playurisignal.emit (self.examfile)

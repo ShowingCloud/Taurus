@@ -46,6 +46,7 @@ class Transcoder (QtCore.QObject):
 		decoder.connect ("pad-added", self.cb_pad_added)
 		videoscale = gst.element_factory_make ("videoscale")
 		videorate = gst.element_factory_make ("videorate")
+		videoconv = gst.element_factory_make ("ffmpegcolorspace")
 		audioconv = gst.element_factory_make ("audioconvert")
 		caps = gst.element_factory_make ("capsfilter")
 		caps.set_property ('caps', gst.caps_from_string ("\
@@ -66,9 +67,9 @@ class Transcoder (QtCore.QObject):
 		self.__vpad = videoscale.get_pad ("sink")
 
 		self.pipeline.add (source, decoder, audioenc, videoenc, muxer, progress, sink,
-				caps, videoscale, videorate, audioconv)
+				caps, videoscale, videorate, audioconv, videoconv)
 		gst.element_link_many (source, decoder)
-		gst.element_link_many (videoscale, videorate, caps, videoenc, muxer)
+		gst.element_link_many (videoscale, videorate, videoconv, caps, videoenc, muxer)
 		gst.element_link_many (audioconv, audioenc, muxer)
 		gst.element_link_many (muxer, progress, sink)
 

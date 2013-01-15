@@ -23,6 +23,9 @@ class VideoSplitter (QtCore.QObject):
 		self.totranscode = totranscode
 		self.parent = parent
 
+		self.lastprogress = -1
+		self.progress = -1
+
 		self.dstfileinfo = QtCore.QFileInfo (dstfile)
 		if self.dstfileinfo.suffix() == "":
 #			dstfile += ".%s" % (QtCore.QFileInfo (srcfile).suffix())
@@ -46,16 +49,15 @@ class VideoSplitter (QtCore.QObject):
 
 		self.hangchecker = QtCore.QTimer()
 		self.hangchecker.timeout.connect (self.hangcheck)
-		self.hangchecker.start (3000)
+		self.hangchecker.start (15000)
 
 		self.startnewsplit.emit (timestring, self.dstfileinfo.fileName(), QtCore.QDir.toNativeSeparators (self.dstfileinfo.absolutePath()))
 
 	def hangcheck (self):
-		if not os.path.exists (self.dstfile) or os.stat (self.dstfile).st_size == 0:
+		if self.progress == self.lastprogress:
 			self.pipeline.set_state (gst.STATE_NULL)
 			self.pipeline.set_state (gst.STATE_PLAYING)
-		else:
-			self.hangchecker.stop()
+		self.lastprogress = self.progress
 
 	def dowork (self):
 
@@ -79,33 +81,9 @@ class VideoSplitter (QtCore.QObject):
 
 		'''
 		vencode = gst.element_factory_make (self.params['videoencoder'])
-		if self.params['videoencoder'] in ['x264enc']:
-			index = 1
-		else:
-			index = 1000
-
-		if self.params['videobitrate']:
-			try:
-				vencode.set_property ('bitrate', round (float (self.params['videobitrate']) / 1000) * index)
-			except:
-				vencode.set_property ('bitrate', 1024 * index)
-		else:
-			vencode.set_property ('bitrate', 1024 * index)
-
+		vencode.set_property ('bitrate', self.params['videobitrate'])
 		aencode = gst.element_factory_make (self.params['audioencoder'])
-		if self.params['audioencoder'] in ['lamemp3enc']:
-			index = 1
-		else:
-			index = 1000
-
-		if self.params['audiobitrate']:
-			try:
-				aencode.set_property ('bitrate', round (float (self.params['audiobitrate']) / 1000) * index)
-			except:
-				aencode.set_property ('bitrate', 128 * index)
-		else:
-			aencode.set_property ('bitrate', 128 * index)
-
+		aencode.set_property ('bitrate', (self.params['audiobitrate'])
 		mux = gst.element_factory_make (self.params['muxer'])
 		'''
 
@@ -140,11 +118,12 @@ class VideoSplitter (QtCore.QObject):
 			preport = gst.element_factory_make ('progressreport', 'title')
 			preport.set_property ('silent', False)
 			preport.set_property ('update-freq', 1)
+			vconv = gst.element_factory_make ('ffmpegcolorspace')
 			caps = gst.element_factory_make ('capsfilter')
 			caps.set_property ('caps', gst.Caps (self.params['videooutcaps']))
 
-			src.add_many (source, overlay, preport, caps)
-			gst.element_link_many (source, overlay, preport, caps)
+			src.add_many (source, overlay, preport, vconv, caps)
+			gst.element_link_many (source, overlay, preport, vconv, caps)
 			src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
 			vsrc = gst.element_factory_make ('gnlsource')
@@ -311,8 +290,12 @@ class VideoSplitter (QtCore.QObject):
 			self.finished.emit()
 		elif message.type == gst.MESSAGE_ELEMENT:
 			if message.structure.get_name() == "progress":
-				if 'output' in message.src.get_name() or 'video' in message.src.get_name() or 'audio' in message.src.get_name():
-					try:
-						self.updatemodel.emit (message.structure ['percent'])
-					except:
-						pass
+				try:
+					if 'output' in message.src.get_name():
+						self.progress = message.structure ['percent']
+						self.updatemodel.emit (self.progress)
+					elif 'video' in message.src.get_name() or 'audio' in message.src.get_name():
+						self.progress = (message.structure ['current'] * gst.SECOND - self.starttime) * 100 / self.duration
+						self.updatemodel.emit (self.progress)
+				except:
+					pass

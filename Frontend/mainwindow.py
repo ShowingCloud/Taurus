@@ -231,23 +231,20 @@ class MainWindow (QtGui.QMainWindow):
 
 		self.player = Player (self.windowId, self.ui.sliderseek.minimum(), self.ui.sliderseek.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
 
-		self.ui.buttonplayerplay.clicked.connect (self.player.playclicked)
-		self.ui.buttonplayerstop.clicked.connect (self.player.stopclicked)
-		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclicked)
-		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclicked)
-		self.ui.buttonvolume.clicked.connect (self.player.muteornot)
-		self.ui.sliderseek.valueChanged.connect (self.player.sliderseekvalue)
-		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevalue)
+		self.ui.buttonplayerplay.clicked.connect (self.player.playclickedsignal)
+		self.ui.buttonplayerstop.clicked.connect (self.player.stopclickedsignal)
+		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclickedsignal)
+		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclickedsignal)
+		self.ui.buttonvolume.clicked.connect (self.player.muteornotsignal)
+		self.ui.sliderseek.valueChanged.connect (self.player.sliderseekvaluesignal)
+		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevaluesignal)
 
-		self.player.playurisignal.connect (self.player.playuri)
 		self.player.updatelabelduration.connect (self.updatelabelduration)
 		self.player.updatesliderseek.connect (self.updatesliderseek)
 		self.player.updateslidervolume.connect (self.updateslidervolume)
 		self.player.updatelineedit.connect (self.updatelineedit)
 		self.player.setbuttonplay.connect (self.playersetbuttonplay)
 		self.player.setbuttonpause.connect (self.playersetbuttonpause)
-		self.player.setloopsignal.connect (self.player.setloop)
-		self.player.seekstarttimesignal.connect (self.player.seekstarttime)
 
 		self.player.startworker()
 
