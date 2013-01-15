@@ -1,19 +1,20 @@
 #!/usr/bin/python
 
-import sys, os, thread, time
+import sys, os, thread, time, shutil, subprocess
 import gobject, gst
 from PySide import QtCore, QtGui
 from ctypes import pythonapi, c_void_p, py_object
 
 import xmlrpclib
 import hashlib
-from threading import Thread
+#from threading import Thread
 
 from ui_mainwindow import Ui_MainWindow
 from ui_login import Ui_Login
 
 
 TransTaskProcessing, TransTaskFinished, TransTaskDeleted = xrange (3)
+MergeTaskProcessing, MergeTaskFinished, MergeTaskDeleted = xrange (3)
 
 
 class MainWindow (QtGui.QMainWindow):
@@ -40,6 +41,11 @@ class MainWindow (QtGui.QMainWindow):
 		self.player = Player (self.ui, self.windowId)
 		self.player.start()
 
+		tmppath = os.path.join (os.getcwd(), "tmp")
+		if os.path.exists (tmppath):
+			shutil.rmtree (tmppath)
+		os.makedirs (tmppath)
+
 	def createActions (self):
 		self.restact = QtGui.QAction (self.tr ("&Restore"), self, triggered = self.showNormal)
 		self.minact = QtGui.QAction (self.tr ("Mi&nimize"), self, triggered = self.showMinimized)
@@ -64,17 +70,33 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.MovieEdit.clicked.connect (self.changePage1)
 		self.ui.FormatConvert.clicked.connect (self.changePage)
 
-		self.ui.tabletrans.setModel (self.transfermodel (self))
-		self.ui.tabletrans.setRootIsDecorated (False)
-		self.ui.tabletrans.setAlternatingRowColors (True)
-		self.ui.tabletrans.setItemDelegate (TransferDelegate (self))
+		self.ui.transview.setModel (self.transfermodel (self))
+		self.ui.transview.setRootIsDecorated (False)
+		self.ui.transview.setAlternatingRowColors (True)
+		self.ui.transview.setItemDelegate (TransferDelegate (self))
 		for i in xrange (4):
-			self.ui.tabletrans.setColumnWidth (i, 200)
-		self.ui.tabletrans.header().setDefaultAlignment (QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+			self.ui.transview.setColumnWidth (i, 200)
+		self.ui.transview.header().setDefaultAlignment (QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+		self.ui.mergeview.setModel (self.mergemodel (self))
+		self.ui.mergeview.setRootIsDecorated (False)
+		self.ui.mergeview.setAlternatingRowColors (True)
+		for i in xrange (4):
+			self.ui.mergeview.setColumnWidth (i, 200)
+		self.ui.mergeview.header().setDefaultAlignment (QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+		self.merger = VideoMerger (self.ui.mergeview.model(), self)
+
+		self.ui.stackedWidget.setCurrentIndex (0)
 
 	def transfermodel (self, parent):
 		model = QtGui.QStandardItemModel (0, 4, parent)
 		model.setHorizontalHeaderLabels ([self.tr ("Cartoon Name"), self.tr ("Transfer Progress"), self.tr ("Status"), self.tr ("Output Path")])
+		return model
+
+	def mergemodel (self, parent):
+		model = QtGui.QStandardItemModel (0, 4, parent)
+		model.setHorizontalHeaderLabels ([self.tr ("File Name"), self.tr ("Duration"), self.tr ("Resolution"), self.tr ("Status")])
 		return model
 
 #	def resizeEvent (self, event):
@@ -91,9 +113,9 @@ class MainWindow (QtGui.QMainWindow):
 	@QtCore.Slot()
 	def on_buttonloadfile_clicked (self):
 
-		filepath = QtGui.QFileDialog.getOpenFileName (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
-		if filepath:
-			self.player.playuri (filepath)
+		self.playerfile = QtGui.QFileDialog.getOpenFileName (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
+		if self.playerfile:
+			self.player.playuri (self.playerfile)
 
 	@QtCore.Slot()
 	def on_buttonplayerplay_clicked (self):
@@ -123,6 +145,39 @@ class MainWindow (QtGui.QMainWindow):
 	def on_slidervolume_valueChanged (self, slider):
 		self.player.slidervolumevalue (slider)
 
+	@QtCore.Slot()
+	def on_buttonpreview_clicked (self):
+		if not self.playerfile:
+			return
+
+		self.player.stopclicked()
+
+	@QtCore.Slot()
+	def on_buttonsave_clicked (self):
+		if not self.playerfile:
+			return
+
+		starttime = self.ui.lineeditstarttime.text()
+		stoptime = self.ui.lineeditendtime.text()
+		if starttime == "" or stoptime == "":
+			return
+
+		model = self.ui.transview.model()
+		row = model.rowCount()
+		model.insertRow (row)
+
+		model.setData (model.index (row, 0), self.playerfile)
+		model.setData (model.index (row, 1), 0)
+		model.setData (model.index (row, 2), self.tr ("Not Started"))
+		model.setData (model.index (row, 2), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+
+		outputname = QtGui.QFileDialog.getSaveFileName (self, self.tr ("Save destination"))[0]
+		model.setData (model.index (row, 3), outputname)
+
+		videosplit = VideoSplitter (self.playerfile, outputname, starttime, stoptime, model, row, self)
+		videosplit.start()
+		self.transcoding.append ({"thread": videosplit, "status": TransTaskProcessing})
+
 	def closeEvent (self, event):
 		if self.trayicon.isVisible():
 			self.hide()
@@ -133,15 +188,16 @@ class MainWindow (QtGui.QMainWindow):
 
 		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
 		newpath = QtGui.QFileDialog.getExistingDirectory (self, self.tr ("Select output directory"))
-		model = self.ui.tabletrans.model()
+		model = self.ui.transview.model()
 
 		while len (files) > 0:
-			newfile = QtCore.QFileInfo (files.pop())
+			newfile = QtCore.QFileInfo (files.pop (0))
 			row = model.rowCount()
 			model.insertRow (row)
 
 			model.setData (model.index (row, 0), newfile.fileName())
 			model.setData (model.index (row, 1), 0)
+			model.setData (model.index (row, 2), self.tr ("Not Started"))
 			model.setData (model.index (row, 2), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
 
 			if newpath == "":
@@ -155,52 +211,106 @@ class MainWindow (QtGui.QMainWindow):
 
 	@QtCore.Slot()
 	def on_buttontransbegin_clicked (self):
-		row = self.ui.tabletrans.currentIndex().row()
+		row = self.ui.transview.currentIndex().row()
 		if self.transcoding [row] ["status"] == TransTaskProcessing:
 			self.transcoding [row] ["thread"].play()
 
 	@QtCore.Slot()
 	def on_buttontranspause_clicked (self):
-		row = self.ui.tabletrans.currentIndex().row()
+		row = self.ui.transview.currentIndex().row()
 		if self.transcoding [row] ["status"] == TransTaskProcessing:
 			self.transcoding [row] ["thread"].pause()
 
 	@QtCore.Slot()
 	def on_buttontransdelete_clicked (self):
-		row = self.ui.tabletrans.currentIndex().row()
+		row = self.ui.transview.currentIndex().row()
 		if self.transcoding [row] ["status"] == TransTaskProcessing:
 			self.transcoding [row] ["thread"].remove()
-			self.transcoding [row] ["status"] = TransTaskDeleted
-			self.ui.tabletrans.setRowHidden (row, QtCore.QModelIndex(), True)
+		self.transcoding [row] ["status"] = TransTaskDeleted
+		self.ui.transview.setRowHidden (row, QtCore.QModelIndex(), True)
 
 	@QtCore.Slot()
 	def on_listWidget_itemClicked (self):
 		self.translisting = self.ui.listWidget.currentRow()
 
-		for row in xrange (self.ui.tabletrans.model().rowCount()):
+		for row in xrange (self.ui.transview.model().rowCount()):
 			if self.transcoding [row] ["status"] == self.translisting:
-				self.ui.tabletrans.setRowHidden (row, QtCore.QModelIndex(), False)
+				self.ui.transview.setRowHidden (row, QtCore.QModelIndex(), False)
 			else:
-				self.ui.tabletrans.setRowHidden (row, QtCore.QModelIndex(), True)
+				self.ui.transview.setRowHidden (row, QtCore.QModelIndex(), True)
 
 	def transfertaskfinished (self, row):
 		self.transcoding [row] ["status"] = TransTaskFinished
 
 		if self.translisting == TransTaskProcessing:
-			self.ui.tabletrans.setRowHidden (row, QtCore.QModelIndex(), True)
+			self.ui.transview.setRowHidden (row, QtCore.QModelIndex(), True)
 		else:
-			self.ui.tabletrans.setRowHidden (row, QtCore.QModelIndex(), False)
+			self.ui.transview.setRowHidden (row, QtCore.QModelIndex(), False)
+
+	@QtCore.Slot()
+	def on_buttonplus_clicked (self):
+
+		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
+		model = self.ui.mergeview.model()
+
+		while len (files) > 0:
+			newfile = QtCore.QFileInfo (files.pop (0))
+			row = model.rowCount()
+			model.insertRow (row)
+
+			model.setData (model.index (row, 0), newfile.fileName())
+			model.setData (model.index (row, 0), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+			model.setData (model.index (row, 1), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+			model.setData (model.index (row, 2), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+			model.setData (model.index (row, 3), self.tr ("Not Started"))
+			model.setData (model.index (row, 3), QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+
+			self.ui.labelmerge.setText (self.tr ("There are %d video clips to be merged.") % (row + 1))
+
+			self.merger.appendtask (newfile.absoluteFilePath(), row)
+
+	@QtCore.Slot()
+	def on_buttonup_clicked (self):
+		row = self.ui.mergeview.currentIndex().row()
+		model = self.ui.mergeview.model()
+
+		if row == 0:
+			return
+		
+		model.insertRow (row - 1, model.takeRow (row))
+		self.merger.switchrow (row, row - 1)
+		self.ui.mergeview.setCurrentIndex (model.index (row - 1, 0))
+
+	@QtCore.Slot()
+	def on_buttondown_clicked (self):
+		row = self.ui.mergeview.currentIndex().row()
+		model = self.ui.mergeview.model()
+
+		if row >= model.rowCount() - 1:
+			return
+
+		model.insertRow (row + 1, model.takeRow (row))
+		self.merger.switchrow (row, row + 1)
+		self.ui.mergeview.setCurrentIndex (model.index (row + 1, 0))
+
+	@QtCore.Slot()
+	def on_buttondelete_clicked (self):
+		row = self.ui.mergeview.currentIndex().row()
+		self.ui.mergeview.model().takeRow (row)
+		self.merger.removerow (row)
+
+	@QtCore.Slot()
+	def on_buttonstart_clicked (self):
+		self.merger.start()
+
+	@QtCore.Slot()
+	def on_buttonbrowse_clicked (self):
+		self.ui.lineeditsaveblank.setText (QtGui.QFileDialog.getExistingDirectory (self, self.tr ("Select output directory")))
 
 	def changePage (self):
-#		nextPage = self.ui.stackedWidget.currentIndex() + 1
-#		if nextPage >= self.ui.stackedWidget.count():
-#			nextPage = 0
 		self.ui.stackedWidget.setCurrentIndex (1)
 
 	def changePage1 (self):
-#		nextPage = self.ui.stackedWidget.currentIndex() - 1
-#		if nextPage >= self.ui.stackedWidget.count():
-#			nextPage = 0
 		self.ui.stackedWidget.setCurrentIndex (0)
 
 
@@ -463,6 +573,8 @@ class Transcoder (QtCore.QThread):
 		self.model = model
 		self.row = row
 
+		self.taskfinished.connect (self.parent.transfertaskfinished)
+
 	def run (self):
 
 		self.pipeline = gst.Pipeline ("pipeline")
@@ -479,7 +591,7 @@ class Transcoder (QtCore.QThread):
 		colorspace2 = gst.element_factory_make ("ffmpegcolorspace")
 		caps = gst.element_factory_make ("capsfilter")
 		caps.set_property ('caps', gst.caps_from_string ("video/x-raw-rgb, width=640, height=480, framerate=25/1"))
-		audioenc = gst.element_factory_make ("ffenc_aac")
+		audioenc = gst.element_factory_make ("faac")
 		audioenc.set_property ('bitrate', 128000)
 		videoenc = gst.element_factory_make ("x264enc")
 		videoenc.set_property ('bitrate', 1024)
@@ -505,13 +617,9 @@ class Transcoder (QtCore.QThread):
 		self.bus.connect ("message", self.on_message)
 		self.bus.connect ("sync-message::element", self.on_sync_message)
 
-		self.model.setData (self.model.index (self.row, 1), 0)
-		self.model.setData (self.model.index (self.row, 2), self.tr ("Not Started"))
-
-		self.taskfinished.connect (self.parent.transfertaskfinished)
-
 		self.pipeline.set_state (gst.STATE_PAUSED)
 		self.mainloop.run()
+		self.pipeline.set_state (gst.STATE_NULL)
 
 	def play (self):
 		self.pipeline.set_state (gst.STATE_PLAYING)
@@ -543,6 +651,324 @@ class Transcoder (QtCore.QThread):
 				if message.structure ['percent'] >= 100:
 					self.model.setData (self.model.index (self.row, 2), self.tr ("Finished"))
 					self.taskfinished.emit (self.row)
+
+	def on_sync_message (self, bus, message):
+		if message.structure is None:
+			return
+		message_name = message.structure.get_name()
+
+	def cb_pad_added (self, element, pad, islast):
+	    caps = pad.get_caps()
+	    name = caps[0].get_name()
+	    if 'audio' in name:
+	        if not self.__apad.is_linked(): # Only link once
+	            pad.link (self.__apad)
+	    elif 'video' in name:
+	        if not self.__vpad.is_linked():
+	            pad.link (self.__vpad)
+
+
+class VideoMerger (QtCore.QThread):
+
+	def __init__ (self, model, parent):
+
+		QtCore.QThread.__init__ (self, parent)
+		gobject.threads_init()
+		self.mainloop = gobject.MainLoop()
+		self.model = model
+		self.parent = parent
+
+		self.srcfiles = []
+
+	def appendtask (self, srcfile, row):
+		self.srcfiles.append ({'srcfile': srcfile, 'row': row})
+		self.items = len (self.srcfiles)
+
+	def switchrow (self, row1, row2):
+		rows = [i['row'] for i in self.srcfiles]
+		a, b = rows.index (row1), rows.index (row2)
+		self.srcfiles[a], self.srcfiles[b] = self.srcfiles[b], self.srcfiles[a]
+
+	def removerow (self, row):
+		rows = [i['row'] for i in self.srcfiles]
+		r = rows.index (row)
+		self.srcfiles.pop (r)
+		self.items = len (self.srcfiles)
+
+	def run (self):
+
+		if len (self.srcfiles) < 1:
+			msg = QtGui.QMessageBox()
+			msg.setInformativeText (self.tr ("Hasn't chosen any video clips."))
+			msg.exec_()
+			return
+
+		if self.parent.ui.lineeditsaveblank.text() == "" or self.parent.ui.lineeditfilenameblank.text() == "" \
+				or not os.path.exists (self.parent.ui.lineeditsaveblank.text()) or not os.path.isdir (self.parent.ui.lineeditsaveblank.text()):
+			msg = QtGui.QMessageBox()
+			msg.setInformativeText (self.tr ("Save destination invalid."))
+			msg.exec_()
+			return
+
+		self.dstfile = os.path.join (self.parent.ui.lineeditsaveblank.text(), self.parent.ui.lineeditfilenameblank.text())
+
+		for i in xrange (self.items):
+
+			self.srcfiles[i]['origname'] = "tmp/orig%d.avi" % (self.srcfiles[i]['row'])
+
+			self.pipeline = gst.Pipeline ("pipeline")
+			source = gst.element_factory_make ("filesrc")
+			source.set_property ("location", self.srcfiles[i]['srcfile'])
+			sink = gst.element_factory_make ("filesink")
+			sink.set_property ("location", self.srcfiles[i]['origname'])
+			progress = gst.element_factory_make ("progressreport")
+#			progress.set_property ('silent', True)
+			progress.set_property ('update-freq', 1)
+
+			self.pipeline.add (source, progress, sink)
+			gst.element_link_many (source, progress, sink)
+
+			self.bus = self.pipeline.get_bus()
+			self.bus.add_signal_watch()
+			self.bus.enable_sync_message_emission()
+			self.bus.connect ("message", self.on_message)
+			self.bus.connect ("sync-message::element", self.on_sync_message)
+
+			self.pipeline.set_state (gst.STATE_PLAYING)
+			self.mainloop.run()
+			self.pipeline.set_state (gst.STATE_NULL)
+
+			self.model.setData (self.model.index (self.srcfiles[i]['row'], 3), self.tr ("Preprocessed"))
+
+		for i in xrange (self.items):
+
+			self.srcfiles[i]['recodename'] = "tmp/recode%d.avi" % (self.srcfiles[i]['row'])
+
+			if subprocess.call (["ffmpeg.exe", "-y", "-i", self.srcfiles[i]['origname'], "-b:a", "128000", "-b:v", "1024000", self.srcfiles[i]['recodename']], shell = True) != 0:
+				print "Error when preprocessing video: %s" % self.srcfiles[i]['origname']
+				return
+
+			self.model.setData (self.model.index (self.srcfiles[i]['row'], 3), self.tr ("Prerecoded"))
+
+		command = ["copy", "/y"]
+		rows = [i['row'] for i in self.srcfiles]
+
+		for i in xrange (self.items):
+
+			if not i == 0:
+				command.append ("+")
+
+			r = rows.index (i)
+			command.append ("%s%s" % (self.srcfiles[r]['recodename'].replace ('/', '\\'), "/b"))
+
+		command.append ("tmp\\merged.avi/b")
+
+		print command
+
+		if subprocess.call (command, shell = True) != 0:
+			print "Error copying file together"
+			return
+
+		for i in xrange (self.items):
+			self.model.setData (self.model.index (i, 3), self.tr ("Merged"))
+
+		if subprocess.call (["ffmpeg.exe", "-y", "-i", "tmp/merged.avi", "-b:a", "128000", "-b:v", "1024000", "tmp/final.avi"], shell = True) != 0:
+			print "Error when processing output video"
+			return
+
+		for i in xrange (self.items):
+			self.model.setData (self.model.index (i, 3), self.tr ("Recoded"))
+
+		self.pipeline = gst.Pipeline ("pipeline")
+		source = gst.element_factory_make ("filesrc")
+		source.set_property ("location", "tmp/final.avi")
+#		decoder = gst.element_factory_make ("decodebin2")
+#		decoder.connect ("new-decoded-pad", self.cb_pad_added)
+#		queuea = gst.element_factory_make ("queue")
+#		queuev = gst.element_factory_make ("queue")
+#		videoscale = gst.element_factory_make ("videoscale")
+#		videorate = gst.element_factory_make ("videorate")
+#		audioconv = gst.element_factory_make ("audioconvert")
+#		colorspace = gst.element_factory_make ("ffmpegcolorspace")
+#		colorspace2 = gst.element_factory_make ("ffmpegcolorspace")
+#		caps = gst.element_factory_make ("capsfilter")
+#		caps.set_property ('caps', gst.caps_from_string ("video/x-raw-rgb, width=640, height=480, framerate=25/1"))
+#		audioenc = gst.element_factory_make ("faac")
+#		audioenc.set_property ('bitrate', 128000)
+#		videoenc = gst.element_factory_make ("x264enc")
+#		videoenc.set_property ('bitrate', 1024)
+#		muxer = gst.element_factory_make ("mp4mux")
+		sink = gst.element_factory_make ("filesink")
+		sink.set_property ("location", self.dstfile)
+		progress = gst.element_factory_make ("progressreport")
+#		progress.set_property ('silent', True)
+		progress.set_property ('update-freq', 1)
+
+#		self.__apad = queuea.get_pad ("sink")
+#		self.__vpad = queuev.get_pad ("sink")
+
+		self.pipeline.add (source, progress, sink)
+		gst.element_link_many (source, progress, sink)
+#		self.pipeline.add (source, decoder, queuea, queuev, audioenc, videoenc, muxer, progress, sink, colorspace, caps, videoscale, videorate, audioconv, colorspace2)
+#		gst.element_link_many (source, decoder)
+#		gst.element_link_many (queuev, videoscale, videorate, colorspace, caps, colorspace2, videoenc, muxer)
+#		gst.element_link_many (queuea, audioconv, audioenc, muxer)
+#		gst.element_link_many (muxer, progress, sink)
+
+		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.enable_sync_message_emission()
+		self.bus.connect ("message", self.on_message)
+		self.bus.connect ("sync-message::element", self.on_sync_message)
+
+		self.pipeline.set_state (gst.STATE_PLAYING)
+		self.mainloop.run()
+		self.pipeline.set_state (gst.STATE_NULL)
+
+		for i in xrange (self.items):
+			self.model.setData (self.model.index (i, 3), self.tr ("Finished"))
+
+#		tmpfile = os.path.join (os.getcwd(), "tmp/raw.avi")
+#		if os.path.exists (tmpfile):
+#			os.remove (tmpfile)
+#		tmpfile = os.path.join (os.getcwd(), "tmp/splitout.avi")
+#		if os.path.exists (tmpfile):
+#			os.remove (tmpfile)
+
+	def on_message (self, bus, message):
+		if message.type == gst.MESSAGE_EOS:
+			self.pipeline.set_state(gst.STATE_NULL)
+			self.mainloop.quit()
+		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state(gst.STATE_NULL)
+			err, debug = message.parse_error()
+			print 'Error: %s' % err, debug
+			self.mainloop.quit()
+		elif message.type == gst.MESSAGE_ELEMENT:
+			pass
+
+	def on_sync_message (self, bus, message):
+		if message.structure is None:
+			return
+		message_name = message.structure.get_name()
+
+	def cb_pad_added (self, element, pad, islast):
+	    caps = pad.get_caps()
+	    name = caps[0].get_name()
+	    if 'audio' in name:
+	        if not self.__apad.is_linked(): # Only link once
+	            pad.link (self.__apad)
+	    elif 'video' in name:
+	        if not self.__vpad.is_linked():
+	            pad.link (self.__vpad)
+
+
+class VideoSplitter (QtCore.QThread):
+
+	taskfinished = QtCore.Signal (int)
+
+	def __init__ (self, srcfile, dstfile, starttime, duration, model, row, parent):
+
+		QtCore.QThread.__init__ (self, parent)
+		gobject.threads_init()
+		self.mainloop = gobject.MainLoop()
+		self.srcfile = srcfile
+		self.dstfile = dstfile
+		self.starttime = starttime
+		self.duration = duration
+		self.model = model
+		self.row = row
+		self.parent = parent
+		self.procedure = 0
+
+	def run (self):
+
+		self.pipeline = gst.Pipeline ("pipeline")
+		source = gst.element_factory_make ("filesrc")
+		source.set_property ("location", self.srcfile)
+		sink = gst.element_factory_make ("filesink")
+		sink.set_property ("location", "tmp/raw.avi")
+		progress = gst.element_factory_make ("progressreport")
+#		progress.set_property ('silent', True)
+		progress.set_property ('update-freq', 1)
+
+		self.pipeline.add (source, progress, sink)
+		gst.element_link_many (source, progress, sink)
+
+		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.enable_sync_message_emission()
+		self.bus.connect ("message", self.on_message)
+		self.bus.connect ("sync-message::element", self.on_sync_message)
+
+		self.model.setData (self.model.index (self.row, 1), 0)
+		self.model.setData (self.model.index (self.row, 2), self.tr ("Not Started"))
+
+		self.taskfinished.connect (self.parent.transfertaskfinished)
+
+		self.pipeline.set_state (gst.STATE_PLAYING)
+		self.procedure = 1
+		self.mainloop.run()
+		self.pipeline.set_state (gst.STATE_NULL)
+
+		if subprocess.call (["ffmpeg.exe", "-y", "-ss", self.starttime, "-t", self.duration, "-i", "tmp/raw.avi", "-vcodec", "copy", "-acodec", "copy", "tmp/splitout.avi"], shell = True) != 0:
+			print "Error when splitting video using ffmpeg"
+			return
+
+		self.procedure = 2
+
+		self.pipeline = gst.Pipeline ("pipeline")
+		source = gst.element_factory_make ("filesrc")
+		source.set_property ("location", "tmp/splitout.avi")
+		sink = gst.element_factory_make ("filesink")
+		sink.set_property ("location", self.dstfile)
+		progress = gst.element_factory_make ("progressreport")
+#		progress.set_property ('silent', True)
+		progress.set_property ('update-freq', 1)
+
+		self.pipeline.add (source, progress, sink)
+		gst.element_link_many (source, progress, sink)
+
+		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.enable_sync_message_emission()
+		self.bus.connect ("message", self.on_message)
+		self.bus.connect ("sync-message::element", self.on_sync_message)
+
+		self.pipeline.set_state (gst.STATE_PLAYING)
+		self.procedure = 3
+		self.mainloop.run()
+		self.pipeline.set_state (gst.STATE_NULL)
+
+		tmpfile = os.path.join (os.getcwd(), "tmp/raw.avi")
+		if os.path.exists (tmpfile):
+			os.remove (tmpfile)
+		tmpfile = os.path.join (os.getcwd(), "tmp/splitout.avi")
+		if os.path.exists (tmpfile):
+			os.remove (tmpfile)
+
+	def on_message (self, bus, message):
+		if message.type == gst.MESSAGE_EOS:
+			self.pipeline.set_state(gst.STATE_NULL)
+			if self.procedure == 3:
+				self.model.setData (self.model.index (self.row, 1), 100)
+				self.model.setData (self.model.index (self.row, 2), self.tr ("Finished"))
+				self.taskfinished.emit (self.row)
+			self.mainloop.quit()
+		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state(gst.STATE_NULL)
+			err, debug = message.parse_error()
+			print 'Error: %s' % err, debug
+			self.mainloop.quit()
+		elif message.type == gst.MESSAGE_ELEMENT:
+			if message.structure.get_name() == "progress":
+				if self.procedure == 1:
+					self.model.setData (self.model.index (self.row, 1), message.structure ['percent'] * 0.2)
+				elif self.procedure == 3:
+					self.model.setData (self.model.index (self.row, 1), message.structure ['percent'] * 0.2 + 60)
+					if message.structure ['percent'] >= 100:
+						self.model.setData (self.model.index (self.row, 2), self.tr ("Finished"))
+						self.taskfinished.emit (self.row)
 
 	def on_sync_message (self, bus, message):
 		if message.structure is None:

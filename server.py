@@ -38,7 +38,7 @@ class User (base):
 class ServerTray (QtCore.QObject):
 
 	def __init__ (self, parent = None):
-		QtGui.QWidget.__init__ (self, parent)
+		QtCore.QObject.__init__ (self, parent)
 
 		self.quitact = QtGui.QAction (self.tr ("&Quit"), self, triggered = sys.exit)
 

@@ -27,23 +27,44 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <property name="horizontalSpacing">
+    <property name="margin">
      <number>0</number>
     </property>
-    <property name="margin">
+    <property name="spacing">
      <number>0</number>
     </property>
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout" stretch="20,89,3">
+      <property name="spacing">
+       <number>0</number>
+      </property>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QGroupBox" name="groupBox">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>115</height>
+           </size>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">/*background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,stop:0 rgba(83,83,83,255),stop0.5 rgba(124,124,125,255),stop1 rgba(83,83,83,255) );*/
+/*background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(83, 83, 83, 255), stop:0.514124 rgba(125, 125, 125, 255), stop:0.954802 rgba(83, 83, 83, 255)); */
+border:outset
+</string>
           </property>
           <property name="title">
            <string/>
@@ -53,12 +74,15 @@
             <number>0</number>
            </property>
            <property name="spacing">
-            <number>6</number>
+            <number>0</number>
            </property>
            <item row="1" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,10,3,10,50,40">
+            <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,10,3,10,60,40">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <property name="margin">
-              <number>2</number>
+              <number>0</number>
              </property>
              <item>
               <widget class="QLabel" name="labelblank">
@@ -77,8 +101,11 @@
                <property name="maximumSize">
                 <size>
                  <width>20</width>
-                 <height>99</height>
+                 <height>130</height>
                 </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(82, 82, 82, 255),  stop:0.954802 rgba(86, 86, 86, 255));</string>
                </property>
                <property name="text">
                 <string/>
@@ -102,11 +129,13 @@
                <property name="maximumSize">
                 <size>
                  <width>68</width>
-                 <height>99</height>
+                 <height>115</height>
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">border-image: url(:/images/Animation Edition2.png);</string>
+                <string notr="true">border-image: url(:/images/Animation Edition2.png);
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(86, 86, 86, 255),  stop:0.954802 rgba(99, 99,99, 255));
+</string>
                </property>
                <property name="text">
                 <string/>
@@ -130,12 +159,14 @@
                <property name="maximumSize">
                 <size>
                  <width>20</width>
-                 <height>99</height>
+                 <height>130</height>
                 </size>
                </property>
                <property name="styleSheet">
                 <string notr="true">font: 75 14pt &quot;SimHei&quot;;
-color: rgb(255, 255, 255);</string>
+
+color: rgb(255, 255, 255);
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(99, 99, 99, 255), stop:0.954802 rgba(102, 102, 102, 255));</string>
                </property>
                <property name="text">
                 <string> &gt;</string>
@@ -143,7 +174,7 @@ color: rgb(255, 255, 255);</string>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="FormatConvert">
+              <widget class="QPushButton" name="FomatConvert">
                <property name="enabled">
                 <bool>true</bool>
                </property>
@@ -162,11 +193,12 @@ color: rgb(255, 255, 255);</string>
                <property name="maximumSize">
                 <size>
                  <width>68</width>
-                 <height>99</height>
+                 <height>115</height>
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">border-image: url(:/images/format conversion2.png);</string>
+                <string notr="true">border-image: url(:/images/format conversion2.png);
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(102, 102, 102, 255), stop:0.954802 rgba(111,111, 111, 255));</string>
                </property>
                <property name="text">
                 <string/>
@@ -174,22 +206,31 @@ color: rgb(255, 255, 255);</string>
               </widget>
              </item>
              <item>
-              <spacer name="horizontalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+              <widget class="QLabel" name="labelblankbesidecup">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
-               <property name="sizeHint" stdset="0">
+               <property name="maximumSize">
                 <size>
-                 <width>40</width>
-                 <height>20</height>
+                 <width>1000</width>
+                 <height>130</height>
                 </size>
                </property>
-              </spacer>
+               <property name="styleSheet">
+                <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(111,111,111, 255), stop:0.6 rgba(125, 125, 125, 255), stop:0.954802 rgba(113,113, 113, 255));</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QGroupBox" name="groupBox_2">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -203,11 +244,12 @@ color: rgb(255, 255, 255);</string>
                <property name="maximumSize">
                 <size>
                  <width>267</width>
-                 <height>99</height>
+                 <height>130</height>
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">border:outset;</string>
+                <string notr="true">border:outset;
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(113, 113, 113, 255),  stop:0.954802 rgba(83, 83, 83, 255));</string>
                </property>
                <property name="title">
                 <string/>
@@ -232,11 +274,14 @@ color: rgb(214, 214, 214);</string>
                <widget class="QLabel" name="labelworldcup">
                 <property name="geometry">
                  <rect>
-                  <x>6</x>
-                  <y>29</y>
+                  <x>8</x>
+                  <y>28</y>
                   <width>77</width>
                   <height>67</height>
                  </rect>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
                 </property>
                 <property name="text">
                  <string/>
@@ -260,7 +305,7 @@ color: rgb(214, 214, 214);</string>
                 <property name="styleSheet">
                  <string notr="true">color: rgb(255, 255, 255);
 
-font: 10pt &quot;SimSun&quot;;</string>
+font: 10pt &quot;新宋体&quot;;</string>
                 </property>
                 <property name="text">
                  <string>视频编辑：共计203集</string>
@@ -277,7 +322,7 @@ font: 10pt &quot;SimSun&quot;;</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">color: rgb(255, 255, 255);
-font: 10pt &quot;SimSun&quot;;</string>
+font: 10pt &quot;新宋体&quot;;</string>
                 </property>
                 <property name="text">
                  <string>视频转码：共计203集</string>
@@ -294,13 +339,22 @@ font: 10pt &quot;SimSun&quot;;</string>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QStackedWidget" name="stackedWidget">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
           </property>
           <property name="currentIndex">
            <number>0</number>
@@ -316,13 +370,16 @@ font: 10pt &quot;SimSun&quot;;</string>
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_3">
               <property name="margin">
-               <number>6</number>
+               <number>0</number>
               </property>
               <property name="spacing">
                <number>0</number>
               </property>
               <item row="0" column="0">
                <widget class="QGroupBox" name="groupBox_3">
+                <property name="styleSheet">
+                 <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(234, 234, 234, 255),  stop:0.954802 rgba(136, 136, 136, 255));</string>
+                </property>
                 <property name="title">
                  <string/>
                 </property>
@@ -335,6 +392,9 @@ font: 10pt &quot;SimSun&quot;;</string>
                  </property>
                  <item row="0" column="0">
                   <layout class="QGridLayout" name="gridLayout_5">
+                   <property name="margin">
+                    <number>9</number>
+                   </property>
                    <property name="spacing">
                     <number>0</number>
                    </property>
@@ -347,13 +407,11 @@ font: 10pt &quot;SimSun&quot;;</string>
  }
  QTabBar::tab:selected,QTabBar::tab:!sekected {
      background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 gray, stop: 0.4 gray,
-                                 stop: 0.5 gray, stop: 1.0 gray);
+                                 stop: 0 rgb(120,120,120),  stop: 1.0 rgb(26,26,26));
  }
 QTabBar::tab:selected{
      background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
-                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+                                 stop: 0 rgb(120,120,120),  stop: 1.0 rgb(201,201,201));
  }
 </string>
                      </property>
@@ -372,9 +430,12 @@ QTabBar::tab:selected{
                         <number>0</number>
                        </property>
                        <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="30,60">
+                        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,60">
                          <item>
                           <layout class="QGridLayout" name="gridLayout_8">
+                           <property name="spacing">
+                            <number>6</number>
+                           </property>
                            <item row="0" column="1">
                             <widget class="QGroupBox" name="groupBox_4">
                              <property name="sizePolicy">
@@ -395,38 +456,50 @@ QTabBar::tab:selected{
                                <height>16777215</height>
                               </size>
                              </property>
+                             <property name="styleSheet">
+                              <string notr="true"> border-width: 2px;
+border-left-style:outset;
+    
+     border-left-color: rgb(102,102,102);</string>
+                             </property>
                              <property name="title">
                               <string/>
                              </property>
                              <layout class="QGridLayout" name="gridLayout_13">
                               <property name="margin">
-                               <number>2</number>
+                               <number>0</number>
                               </property>
                               <property name="horizontalSpacing">
                                <number>6</number>
                               </property>
                               <item row="0" column="0">
-                               <layout class="QGridLayout" name="gridLayout_12" rowstretch="80,10,15">
+                               <layout class="QGridLayout" name="gridLayout_12" rowstretch="80,10,10">
+                                <property name="spacing">
+                                 <number>0</number>
+                                </property>
                                 <item row="2" column="0">
                                  <layout class="QVBoxLayout" name="verticalLayout_6">
                                   <item>
                                    <widget class="QWidget" name="widget_6" native="true">
+                                    <property name="styleSheet">
+                                     <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(149,149, 149, 255), stop:0.954802 rgba(140,140, 140, 255));</string>
+                                    </property>
                                     <widget class="QPushButton" name="buttonsave">
                                      <property name="geometry">
                                       <rect>
-                                       <x>18</x>
-                                       <y>10</y>
-                                       <width>89</width>
+                                       <x>8</x>
+                                       <y>0</y>
+                                       <width>105</width>
                                        <height>33</height>
                                       </rect>
                                      </property>
                                      <property name="styleSheet">
                                       <string notr="true">	background-color: rgb(0,150,219);
 	color: rgb(255,255,255);
-     border-style: outset;
+ 
      border-width: 2px;
-     border-radius: 10px;
-     border-color: beige;
+     border-radius: 5px;
+ 
      font: bold 14px;
 </string>
                                      </property>
@@ -437,19 +510,19 @@ QTabBar::tab:selected{
                                     <widget class="QPushButton" name="buttonpreview">
                                      <property name="geometry">
                                       <rect>
-                                       <x>126</x>
-                                       <y>10</y>
-                                       <width>91</width>
+                                       <x>124</x>
+                                       <y>0</y>
+                                       <width>111</width>
                                        <height>33</height>
                                       </rect>
                                      </property>
                                      <property name="styleSheet">
                                       <string notr="true">	background-color: rgb(0,150,219);
 	color: rgb(255,255,255);
-     border-style: outset;
+   
      border-width: 2px;
-     border-radius: 10px;
-     border-color: beige;
+     border-radius: 5px;
+
      font: bold 14px;
 </string>
                                      </property>
@@ -464,17 +537,14 @@ QTabBar::tab:selected{
                                 <item row="1" column="0">
                                  <layout class="QVBoxLayout" name="verticalLayout_7">
                                   <item>
-                                   <spacer name="verticalSpacer">
-                                    <property name="orientation">
-                                     <enum>Qt::Vertical</enum>
+                                   <widget class="QLabel" name="labelblankaudioload">
+                                    <property name="styleSheet">
+                                     <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(157,157, 157, 255), stop:0.954802 rgba(149,149, 149, 255));</string>
                                     </property>
-                                    <property name="sizeHint" stdset="0">
-                                     <size>
-                                      <width>20</width>
-                                      <height>40</height>
-                                     </size>
+                                    <property name="text">
+                                     <string/>
                                     </property>
-                                   </spacer>
+                                   </widget>
                                   </item>
                                  </layout>
                                 </item>
@@ -482,19 +552,28 @@ QTabBar::tab:selected{
                                  <layout class="QVBoxLayout" name="verticalLayout_8">
                                   <item>
                                    <widget class="QWidget" name="widget_5" native="true">
+                                    <property name="sizePolicy">
+                                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                                      <horstretch>0</horstretch>
+                                      <verstretch>0</verstretch>
+                                     </sizepolicy>
+                                    </property>
+                                    <property name="styleSheet">
+                                     <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(226, 226, 226, 255), stop:0.954802 rgba(157,157, 157, 255));</string>
+                                    </property>
                                     <widget class="QPushButton" name="buttonloadfile">
                                      <property name="geometry">
                                       <rect>
-                                       <x>28</x>
-                                       <y>6</y>
-                                       <width>156</width>
-                                       <height>33</height>
+                                       <x>12</x>
+                                       <y>12</y>
+                                       <width>213</width>
+                                       <height>35</height>
                                       </rect>
                                      </property>
                                      <property name="styleSheet">
                                       <string notr="true">background-color: rgb(0,150,219); 
 color: rgb(255,255,255);
-border-style: outset;
+
 border-width: 2px;
 border-radius: 10px;
 border-color: beige;
@@ -504,7 +583,17 @@ padding: 6px;
 </string>
                                      </property>
                                      <property name="text">
-                                      <string>导入视频文件</string>
+                                      <string/>
+                                     </property>
+                                     <property name="icon">
+                                      <iconset resource="images.qrc">
+                                       <normaloff>:/images/loadaudiofile.png</normaloff>:/images/loadaudiofile.png</iconset>
+                                     </property>
+                                     <property name="iconSize">
+                                      <size>
+                                       <width>213</width>
+                                       <height>39</height>
+                                      </size>
                                      </property>
                                     </widget>
                                     <widget class="QLabel" name="labelleadertitle">
@@ -516,6 +605,10 @@ padding: 6px;
                                        <height>16</height>
                                       </rect>
                                      </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);
+border:outset;</string>
+                                     </property>
                                      <property name="text">
                                       <string>片头标题</string>
                                      </property>
@@ -524,10 +617,14 @@ padding: 6px;
                                      <property name="geometry">
                                       <rect>
                                        <x>6</x>
-                                       <y>46</y>
+                                       <y>56</y>
                                        <width>81</width>
                                        <height>20</height>
                                       </rect>
+                                     </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);
+border:outset;</string>
                                      </property>
                                      <property name="text">
                                       <string>上次截取记录：</string>
@@ -542,6 +639,9 @@ padding: 6px;
                                        <height>16</height>
                                       </rect>
                                      </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);border:outset;</string>
+                                     </property>
                                      <property name="text">
                                       <string>起始时间：</string>
                                      </property>
@@ -554,6 +654,9 @@ padding: 6px;
                                        <width>241</width>
                                        <height>16</height>
                                       </rect>
+                                     </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">color: rgb(0, 0, 0);</string>
                                      </property>
                                      <property name="orientation">
                                       <enum>Qt::Horizontal</enum>
@@ -568,6 +671,9 @@ padding: 6px;
                                        <height>16</height>
                                       </rect>
                                      </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);border:outset;</string>
+                                     </property>
                                      <property name="text">
                                       <string>结束时间：</string>
                                      </property>
@@ -576,10 +682,14 @@ padding: 6px;
                                      <property name="geometry">
                                       <rect>
                                        <x>6</x>
-                                       <y>72</y>
+                                       <y>82</y>
                                        <width>81</width>
                                        <height>20</height>
                                       </rect>
+                                     </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">border:outset;
+background-color: rgba(255, 255, 255, 0);</string>
                                      </property>
                                      <property name="text">
                                       <string>上次保存文件：</string>
@@ -589,10 +699,14 @@ padding: 6px;
                                      <property name="geometry">
                                       <rect>
                                        <x>90</x>
-                                       <y>46</y>
+                                       <y>56</y>
                                        <width>119</width>
                                        <height>20</height>
                                       </rect>
+                                     </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);
+border:outset;</string>
                                      </property>
                                      <property name="text">
                                       <string>00:00:00—00:05:31</string>
@@ -602,10 +716,13 @@ padding: 6px;
                                      <property name="geometry">
                                       <rect>
                                        <x>90</x>
-                                       <y>72</y>
+                                       <y>82</y>
                                        <width>119</width>
                                        <height>20</height>
                                       </rect>
+                                     </property>
+                                     <property name="styleSheet">
+                                      <string notr="true">background-color: rgba(255, 255, 255, 0);border:outset;</string>
                                      </property>
                                      <property name="text">
                                       <string>秦时明月</string>
@@ -678,12 +795,30 @@ border:outset;</string>
                               <string/>
                              </property>
                              <layout class="QGridLayout" name="gridLayout_11">
+                              <property name="margin">
+                               <number>0</number>
+                              </property>
+                              <property name="spacing">
+                               <number>0</number>
+                              </property>
                               <item row="0" column="0">
                                <layout class="QGridLayout" name="gridLayout_10" rowstretch="90,10,20">
                                 <item row="2" column="0">
                                  <layout class="QVBoxLayout" name="verticalLayout_2">
                                   <item>
                                    <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,30,10,10,10,10,30,10,30">
+                                    <property name="spacing">
+                                     <number>6</number>
+                                    </property>
+                                    <property name="leftMargin">
+                                     <number>0</number>
+                                    </property>
+                                    <property name="topMargin">
+                                     <number>0</number>
+                                    </property>
+                                    <property name="rightMargin">
+                                     <number>0</number>
+                                    </property>
                                     <item>
                                      <widget class="QLineEdit" name="lineeditduration">
                                       <property name="styleSheet">
@@ -709,7 +844,8 @@ border:outset;
                                     <item>
                                      <widget class="QPushButton" name="buttonplayerstop">
                                       <property name="styleSheet">
-                                       <string notr="true">border:outset;</string>
+                                       <string notr="true">border:outset;
+background-color: rgba(255, 255, 255, 0);</string>
                                       </property>
                                       <property name="text">
                                        <string/>
@@ -723,7 +859,7 @@ border:outset;
                                     <item>
                                      <widget class="QPushButton" name="buttonplayerbackward">
                                       <property name="styleSheet">
-                                       <string notr="true">border:outset;</string>
+                                       <string notr="true">border:outset;background-color: rgba(255, 255, 255, 0);</string>
                                       </property>
                                       <property name="text">
                                        <string/>
@@ -737,7 +873,7 @@ border:outset;
                                     <item>
                                      <widget class="QPushButton" name="buttonplayerplay">
                                       <property name="styleSheet">
-                                       <string notr="true">border:outset;</string>
+                                       <string notr="true">border:outset;background-color: rgba(255, 255, 255, 0);</string>
                                       </property>
                                       <property name="text">
                                        <string/>
@@ -757,7 +893,8 @@ border:outset;
                                     <item>
                                      <widget class="QPushButton" name="buttonplayerforward">
                                       <property name="styleSheet">
-                                       <string notr="true">border:outset;</string>
+                                       <string notr="true">border:outset;
+background-color: rgba(255, 255, 255, 0);</string>
                                       </property>
                                       <property name="text">
                                        <string/>
@@ -784,7 +921,8 @@ border:outset;
                                     <item>
                                      <widget class="QPushButton" name="buttonvolume">
                                       <property name="styleSheet">
-                                       <string notr="true">border:outset;</string>
+                                       <string notr="true">border:outset;
+background-color: rgba(255, 255, 255, 0);</string>
                                       </property>
                                       <property name="text">
                                        <string/>
@@ -803,6 +941,9 @@ border:outset;
                                         <height>16777215</height>
                                        </size>
                                       </property>
+                                      <property name="styleSheet">
+                                       <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
+                                      </property>
                                       <property name="orientation">
                                        <enum>Qt::Horizontal</enum>
                                       </property>
@@ -819,6 +960,9 @@ border:outset;
                                   </property>
                                   <item>
                                    <widget class="QFrame" name="frame_2">
+                                    <property name="styleSheet">
+                                     <string notr="true">/*background-color: rgb(255, 255, 255);</string>
+                                    </property>
                                     <property name="frameShape">
                                      <enum>QFrame::StyledPanel</enum>
                                     </property>
@@ -834,7 +978,7 @@ border:outset;
                                   <item>
                                    <widget class="QSlider" name="sliderseek">
                                     <property name="styleSheet">
-                                     <string notr="true">background-color: rgb(rgb(167, 167, 167));</string>
+                                     <string notr="true">background-color: rgb(rgb(255, 255, 255));</string>
                                     </property>
                                     <property name="orientation">
                                      <enum>Qt::Horizontal</enum>
@@ -859,8 +1003,299 @@ border:outset;
                        <string>视频合并</string>
                       </attribute>
                       <layout class="QGridLayout" name="gridLayout_15">
+                       <property name="margin">
+                        <number>0</number>
+                       </property>
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
                        <item row="0" column="0">
                         <layout class="QGridLayout" name="gridLayout_14" rowstretch="50,25,15">
+                         <property name="spacing">
+                          <number>0</number>
+                         </property>
+                         <item row="1" column="0">
+                          <layout class="QVBoxLayout" name="verticalLayout_10">
+                           <item>
+                            <widget class="QWidget" name="widget_7" native="true">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>2000</width>
+                               <height>150</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true">background-color: rgb(242, 242, 242);</string>
+                             </property>
+                             <widget class="QLabel" name="labelfilename">
+                              <property name="geometry">
+                               <rect>
+                                <x>18</x>
+                                <y>38</y>
+                                <width>61</width>
+                                <height>21</height>
+                               </rect>
+                              </property>
+                              <property name="font">
+                               <font>
+                                <family>ADMUI3Lg</family>
+                                <pointsize>9</pointsize>
+                               </font>
+                              </property>
+                              <property name="text">
+                               <string>文件名：</string>
+                              </property>
+                             </widget>
+                             <widget class="QLabel" name="labeloutputset">
+                              <property name="geometry">
+                               <rect>
+                                <x>16</x>
+                                <y>4</y>
+                                <width>91</width>
+                                <height>21</height>
+                               </rect>
+                              </property>
+                              <property name="font">
+                               <font>
+                                <family>SimHei</family>
+                                <pointsize>12</pointsize>
+                                <weight>50</weight>
+                                <italic>false</italic>
+                                <bold>false</bold>
+                               </font>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">font: 12pt &quot;SimHei&quot;;</string>
+                              </property>
+                              <property name="text">
+                               <string>输出设置</string>
+                              </property>
+                             </widget>
+                             <widget class="QLabel" name="labelsaveto">
+                              <property name="geometry">
+                               <rect>
+                                <x>18</x>
+                                <y>70</y>
+                                <width>61</width>
+                                <height>21</height>
+                               </rect>
+                              </property>
+                              <property name="font">
+                               <font>
+                                <family>ADMUI3Lg</family>
+                                <pointsize>9</pointsize>
+                               </font>
+                              </property>
+                              <property name="text">
+                               <string>保存到：</string>
+                              </property>
+                             </widget>
+                             <widget class="QPushButton" name="buttonbrowse">
+                              <property name="geometry">
+                               <rect>
+                                <x>476</x>
+                                <y>68</y>
+                                <width>75</width>
+                                <height>23</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-color: rgb(160, 160, 160);
+background-color: rgb(242, 242, 242);</string>
+                              </property>
+                              <property name="text">
+                               <string>浏览</string>
+                              </property>
+                             </widget>
+                             <widget class="QLineEdit" name="lineEditfilenameblank">
+                              <property name="geometry">
+                               <rect>
+                                <x>68</x>
+                                <y>38</y>
+                                <width>393</width>
+                                <height>25</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">background-color: white;
+border-bottom-color: rgb(152, 152, 152);
+border-right-color: rgb(152, 152, 152);
+border-style: outset;
+border-width: 1px;
+border-radius: 5px;
+border-top-color: rgb(101,101,101);
+border-left-color: rgb(101, 101, 101);</string>
+                              </property>
+                             </widget>
+                             <widget class="QLineEdit" name="lineEditsaveblank">
+                              <property name="geometry">
+                               <rect>
+                                <x>68</x>
+                                <y>70</y>
+                                <width>393</width>
+                                <height>25</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">background-color: white;
+border-bottom-color: rgb(152, 152, 152);
+border-right-color: rgb(152, 152, 152);
+border-style: outset;
+border-width: 1px;
+border-radius: 5px;
+border-top-color: rgb(101,101,101);
+border-left-color: rgb(101, 101, 101);</string>
+                              </property>
+                             </widget>
+                             <widget class="QPushButton" name="buttonplus">
+                              <property name="geometry">
+                               <rect>
+                                <x>700</x>
+                                <y>20</y>
+                                <width>29</width>
+                                <height>29</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-image: url(:/images/plus.png);
+background-color: rgba(255, 255, 255, 0);</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                             <widget class="QPushButton" name="buttonup">
+                              <property name="geometry">
+                               <rect>
+                                <x>742</x>
+                                <y>20</y>
+                                <width>29</width>
+                                <height>29</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-image: url(:/images/up.png);</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                             <widget class="QPushButton" name="buttondown">
+                              <property name="geometry">
+                               <rect>
+                                <x>780</x>
+                                <y>20</y>
+                                <width>29</width>
+                                <height>29</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-image: url(:/images/down.png);</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                             <widget class="QPushButton" name="buttondelete">
+                              <property name="geometry">
+                               <rect>
+                                <x>816</x>
+                                <y>20</y>
+                                <width>29</width>
+                                <height>29</height>
+                               </rect>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-image: url(:/images/delete.png);
+background-color: rgba(255, 255, 255, 0);</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item row="0" column="0">
+                          <layout class="QVBoxLayout" name="verticalLayout_12" stretch="90,10">
+                           <property name="spacing">
+                            <number>0</number>
+                           </property>
+                           <item>
+                            <widget class="QTableWidget" name="tableWidget_2">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="focusPolicy">
+                              <enum>Qt::NoFocus</enum>
+                             </property>
+                             <property name="contextMenuPolicy">
+                              <enum>Qt::NoContextMenu</enum>
+                             </property>
+                             <property name="layoutDirection">
+                              <enum>Qt::LeftToRight</enum>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true">background-color:white;
+border:outset;
+</string>
+                             </property>
+                             <property name="autoScroll">
+                              <bool>false</bool>
+                             </property>
+                             <property name="autoScrollMargin">
+                              <number>16</number>
+                             </property>
+                             <column>
+                              <property name="text">
+                               <string>文件名称</string>
+                              </property>
+                              <property name="textAlignment">
+                               <set>AlignHCenter|AlignVCenter|AlignCenter</set>
+                              </property>
+                             </column>
+                             <column>
+                              <property name="text">
+                               <string>时长</string>
+                              </property>
+                             </column>
+                             <column>
+                              <property name="text">
+                               <string>分辨率</string>
+                              </property>
+                             </column>
+                             <column>
+                              <property name="text">
+                               <string>状态</string>
+                              </property>
+                             </column>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QLabel" name="labelmerge">
+                             <property name="styleSheet">
+                              <string notr="true">background-color:white;
+border-bottom-color: rgb(121, 121, 121);
+border-style: outset;
+border-bottom-width: 1px;</string>
+                             </property>
+                             <property name="text">
+                              <string>共有3个视频准备合并</string>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
                          <item row="2" column="0">
                           <layout class="QVBoxLayout" name="verticalLayout_9">
                            <item>
@@ -875,15 +1310,18 @@ border:outset;
                                </property>
                                <property name="maximumSize">
                                 <size>
-                                 <width>756</width>
-                                 <height>35</height>
+                                 <width>2000</width>
+                                 <height>1000</height>
                                 </size>
+                               </property>
+                               <property name="styleSheet">
+                                <string notr="true">background-color: rgb(242, 242, 242);</string>
                                </property>
                                <widget class="QPushButton" name="buttonstart">
                                 <property name="geometry">
                                  <rect>
-                                  <x>10</x>
-                                  <y>0</y>
+                                  <x>192</x>
+                                  <y>12</y>
                                   <width>109</width>
                                   <height>35</height>
                                  </rect>
@@ -905,8 +1343,8 @@ font: bold 14px;
                                <widget class="QPushButton" name="buttoncancel">
                                 <property name="geometry">
                                  <rect>
-                                  <x>148</x>
-                                  <y>0</y>
+                                  <x>348</x>
+                                  <y>12</y>
                                   <width>109</width>
                                   <height>35</height>
                                  </rect>
@@ -928,8 +1366,8 @@ font: bold 14px;
                                <widget class="QPushButton" name="buttonexamine">
                                 <property name="geometry">
                                  <rect>
-                                  <x>290</x>
-                                  <y>0</y>
+                                  <x>496</x>
+                                  <y>12</y>
                                   <width>109</width>
                                   <height>35</height>
                                  </rect>
@@ -954,190 +1392,6 @@ font: bold 14px;
                            </item>
                           </layout>
                          </item>
-                         <item row="1" column="0">
-                          <layout class="QVBoxLayout" name="verticalLayout_10">
-                           <item>
-                            <widget class="QWidget" name="widget_7" native="true">
-                             <property name="sizePolicy">
-                              <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                               <horstretch>0</horstretch>
-                               <verstretch>0</verstretch>
-                              </sizepolicy>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>758</width>
-                               <height>63</height>
-                              </size>
-                             </property>
-                             <widget class="QLabel" name="labelfilename">
-                              <property name="geometry">
-                               <rect>
-                                <x>104</x>
-                                <y>10</y>
-                                <width>61</width>
-                                <height>21</height>
-                               </rect>
-                              </property>
-                              <property name="font">
-                               <font>
-                                <family>ADMUI3Lg</family>
-                                <pointsize>9</pointsize>
-                               </font>
-                              </property>
-                              <property name="text">
-                               <string>文件名：</string>
-                              </property>
-                             </widget>
-                             <widget class="QLabel" name="labeloutputset">
-                              <property name="geometry">
-                               <rect>
-                                <x>2</x>
-                                <y>2</y>
-                                <width>91</width>
-                                <height>21</height>
-                               </rect>
-                              </property>
-                              <property name="font">
-                               <font>
-                                <family>SimHei</family>
-                                <pointsize>15</pointsize>
-                                <weight>50</weight>
-                                <italic>false</italic>
-                                <bold>false</bold>
-                               </font>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">font: 15pt &quot;SimHei&quot;;</string>
-                              </property>
-                              <property name="text">
-                               <string>输出设置</string>
-                              </property>
-                             </widget>
-                             <widget class="QLabel" name="labelsaveto">
-                              <property name="geometry">
-                               <rect>
-                                <x>104</x>
-                                <y>40</y>
-                                <width>61</width>
-                                <height>21</height>
-                               </rect>
-                              </property>
-                              <property name="font">
-                               <font>
-                                <family>ADMUI3Lg</family>
-                                <pointsize>9</pointsize>
-                               </font>
-                              </property>
-                              <property name="text">
-                               <string>保存到：</string>
-                              </property>
-                             </widget>
-                             <widget class="QPushButton" name="buttonbrowse">
-                              <property name="geometry">
-                               <rect>
-                                <x>672</x>
-                                <y>38</y>
-                                <width>75</width>
-                                <height>23</height>
-                               </rect>
-                              </property>
-                              <property name="text">
-                               <string>浏览</string>
-                              </property>
-                             </widget>
-                             <widget class="QLabel" name="labelfilenameblank">
-                              <property name="geometry">
-                               <rect>
-                                <x>164</x>
-                                <y>10</y>
-                                <width>487</width>
-                                <height>23</height>
-                               </rect>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">background-color: white;</string>
-                              </property>
-                              <property name="text">
-                               <string/>
-                              </property>
-                             </widget>
-                             <widget class="QLabel" name="labelsaveblank">
-                              <property name="geometry">
-                               <rect>
-                                <x>164</x>
-                                <y>38</y>
-                                <width>487</width>
-                                <height>23</height>
-                               </rect>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">background-color: white;</string>
-                              </property>
-                              <property name="text">
-                               <string/>
-                              </property>
-                             </widget>
-                            </widget>
-                           </item>
-                          </layout>
-                         </item>
-                         <item row="0" column="0">
-                          <layout class="QVBoxLayout" name="verticalLayout_12">
-                           <item>
-                            <widget class="QTableWidget" name="tableWidget_2">
-                             <property name="sizePolicy">
-                              <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                               <horstretch>0</horstretch>
-                               <verstretch>0</verstretch>
-                              </sizepolicy>
-                             </property>
-                             <property name="focusPolicy">
-                              <enum>Qt::NoFocus</enum>
-                             </property>
-                             <property name="contextMenuPolicy">
-                              <enum>Qt::NoContextMenu</enum>
-                             </property>
-                             <property name="layoutDirection">
-                              <enum>Qt::LeftToRight</enum>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true">background-color:white;</string>
-                             </property>
-                             <column>
-                              <property name="text">
-                               <string>文件名称</string>
-                              </property>
-                             </column>
-                             <column>
-                              <property name="text">
-                               <string>时长</string>
-                              </property>
-                             </column>
-                             <column>
-                              <property name="text">
-                               <string>分辨率</string>
-                              </property>
-                             </column>
-                             <column>
-                              <property name="text">
-                               <string>状态</string>
-                              </property>
-                             </column>
-                            </widget>
-                           </item>
-                           <item>
-                            <widget class="QLabel" name="labelmerge">
-                             <property name="styleSheet">
-                              <string notr="true">background-color:white;</string>
-                             </property>
-                             <property name="text">
-                              <string>共有3个视频准备合并</string>
-                             </property>
-                            </widget>
-                           </item>
-                          </layout>
-                         </item>
                         </layout>
                        </item>
                       </layout>
@@ -1155,7 +1409,7 @@ font: bold 14px;
           </widget>
           <widget class="QWidget" name="page_2">
            <layout class="QGridLayout" name="gridLayout_17" rowstretch="10,70" columnstretch="10,60">
-            <property name="bottomMargin">
+            <property name="margin">
              <number>0</number>
             </property>
             <property name="spacing">
@@ -1168,6 +1422,9 @@ font: bold 14px;
               </property>
               <item row="0" column="0">
                <widget class="QWidget" name="widget_2" native="true">
+                <property name="styleSheet">
+                 <string notr="true">background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(120, 120, 120, 255),  stop:0.954802 rgba(30, 30,30, 255));</string>
+                </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_10">
                  <property name="spacing">
                   <number>6</number>
@@ -1267,13 +1524,14 @@ font: bold 14px;
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>133</width>
-                  <height>50</height>
+                  <width>140</width>
+                  <height>56</height>
                  </size>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(167, 167, 167); 
-font: 15pt &quot;SimHei&quot;;</string>
+font: 15pt &quot;SimHei&quot;;
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(255, 255, 255, 255),  stop:0.954802 rgba(204, 204, 204, 255));</string>
                 </property>
                 <property name="text">
                  <string>   全部任务</string>
@@ -1284,22 +1542,26 @@ font: 15pt &quot;SimHei&quot;;</string>
             </item>
             <item row="1" column="0">
              <layout class="QGridLayout" name="gridLayout_21">
+              <property name="spacing">
+               <number>0</number>
+              </property>
               <item row="0" column="0">
                <widget class="QListWidget" name="listWidget">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>133</width>
+                  <width>140</width>
                   <height>16777215</height>
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgbrgb(167, 167, 167);</string>
+                 <string notr="true">border:outset;
+background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(228, 228, 228, 255),  stop:0.954802 rgba(136, 136, 136, 255));</string>
                 </property>
                 <item>
                  <property name="text">
@@ -1364,13 +1626,13 @@ background-color: rgb(255, 255, 255);</string>
                 <attribute name="horizontalHeaderMinimumSectionSize">
                  <number>2500</number>
                 </attribute>
-				<!--<attribute name="verticalHeaderDefaultSectionSize">
+                <attribute name="verticalHeaderDefaultSectionSize">
                  <number>2000</number>
                 </attribute>
                 <attribute name="verticalHeaderMinimumSectionSize">
                  <number>2000</number>
                 </attribute>
-				--><column>
+                <column>
                  <property name="text">
                   <string>动画名称</string>
                  </property>
@@ -1407,7 +1669,7 @@ background-color: rgb(255, 255, 255);</string>
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="30,50,30">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="30,50,0,10">
         <item>
          <widget class="QLabel" name="labelversions">
           <property name="sizePolicy">
@@ -1417,7 +1679,8 @@ background-color: rgb(255, 255, 255);</string>
            </sizepolicy>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);</string>
+           <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(81, 81, 81);</string>
           </property>
           <property name="text">
            <string>当前版本 V1.0 Beta</string>
@@ -1438,7 +1701,56 @@ background-color: rgb(255, 255, 255);</string>
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="labelcnmoblie">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="images.qrc">:/images/cnmoblie.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="labelchinamoblie">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>120</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::RightToLeft</enum>
           </property>

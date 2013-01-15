@@ -7,7 +7,7 @@
 		<file>images/China Mobile.png</file>
 		<file>images/cnmobile.png</file>
 		<file>images/delete.png</file>
-		<file>images/download.png</file>
+		<file>images/down.png</file>
 		<file>images/format conversion2.png</file>
 		<file>images/icon.png</file>
 		<file>images/import into video files .png</file>
@@ -20,7 +20,7 @@
 		<file>images/plus.png</file>
 		<file>images/previous.png</file>
 		<file>images/stop.png</file>
-		<file>images/upload.png</file>
+		<file>images/up.png</file>
 		<file>images/volume.png</file>
 		<file>images/world cup.png</file>
 	</qresource>
