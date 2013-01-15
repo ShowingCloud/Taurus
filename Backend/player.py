@@ -17,6 +17,7 @@ class Player (QtCore.QObject):
 	setbuttonplay = QtCore.Signal()
 	setbuttonpause = QtCore.Signal()
 	setloopsignal = QtCore.Signal (unicode, unicode)
+	seekstarttimesignal = QtCore.Signal (unicode)
 	quitworkersignal = QtCore.Signal()
 
 	def __init__ (self, windowId, seekmin, seekmax, volmin, volmax, parent = None):
@@ -50,9 +51,11 @@ class Player (QtCore.QObject):
 		self.player = gst.element_factory_make ("playbin2")
 		audiosink = gst.element_factory_make ("autoaudiosink", "audiosink")
 		self.player.set_property ("audio-sink", audiosink)
-#		videosink = gst.element_factory_make ("dshowvideosink", "videosink")
 		videosink = gst.element_factory_make ("autovideosink", "videosink")
 		self.player.set_property ("video-sink", videosink)
+		flags = self.player.get_property ("flags")
+#		flags |= 0xA0
+		self.player.set_property ("flags", flags)
 
 		self.bus = self.player.get_bus()
 		self.bus.enable_sync_message_emission()
@@ -122,6 +125,14 @@ class Player (QtCore.QObject):
 			self.player.set_state (gst.STATE_PLAYING)
 			self.setbuttonpause.emit()
 
+	@QtCore.Slot (str)
+	def seekstarttime (self, start):
+		starttime = str2time (start)
+
+		if self.hasmediafile and starttime <= self.duration:
+			self.player.set_state (gst.STATE_PAUSED)
+			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH | gst.SEEK_FLAG_KEY_UNIT, starttime)
+
 	def updatethread (self):
 		if self.stoppos == 0:
 			try:
@@ -141,41 +152,10 @@ class Player (QtCore.QObject):
 			if self.stoppos != self.startpos:
 				self.updatesliderseek.emit (float (self.position - self.startpos) / (self.stoppos - self.startpos)
 						* (self.seekmax - self.seekmin) + self.seekmin)
-			if not self.stopped:
+			if self.player.get_state (0)[1] == gst.STATE_PLAYING:
 				self.updatelineedit.emit (self.pos_str)
 		except:
 			pass
-
-		while True:
-			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_STATE_CHANGED
-					| gst.MESSAGE_SEGMENT_DONE, 0)
-			if not message:
-				break
-
-			if message.type == gst.MESSAGE_EOS:
-				self.stopped = True
-				self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-				self.player.set_state (gst.STATE_NULL)
-				self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
-				self.updatesliderseek.emit (self.seekmin)
-				self.setbuttonplay.emit()
-			elif message.type == gst.MESSAGE_ERROR:
-				self.stopped = True
-				self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-				self.player.set_state (gst.STATE_NULL)
-				self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
-				self.updatesliderseek.emit (self.seekmin)
-				err, debug = message.parse_error()
-				print 'Error: %s' % err, debug
-				self.setbuttonplay.emit()
-			elif message.type == gst.MESSAGE_STATE_CHANGED:
-				old, new, pending = message.parse_state_changed()
-				if old == gst.STATE_READY and new == gst.STATE_PAUSED and message.src == self.player:
-					self.seek (self.startpos, self.stoppos)
-			elif message.type == gst.MESSAGE_SEGMENT_DONE:
-				src = self.player.get_property ("source")
-				pad = src.get_pad ('src')
-				pad.push_event (gst.event_new_eos())
 
 	def seek (self, start, stop):
 		flags = gst.SEEK_FLAG_SEGMENT | gst.SEEK_FLAG_ACCURATE | gst.SEEK_FLAG_FLUSH
@@ -215,6 +195,7 @@ class Player (QtCore.QObject):
 		self.stopped = False
 
 		self.player.set_state (gst.STATE_PAUSED)
+		self.setbuttonplay.emit()
 		self.position -= 100000000
 
 		if self.position < 0:
@@ -230,6 +211,7 @@ class Player (QtCore.QObject):
 		self.stopped = False
 
 		self.player.set_state (gst.STATE_PAUSED)
+		self.setbuttonplay.emit()
 		self.position += 100000000
 
 		if self.position > self.stoppos:

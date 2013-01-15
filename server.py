@@ -4,7 +4,6 @@ import sys
 from PySide import QtCore, QtGui
 
 import SimpleXMLRPCServer
-import hashlib
 
 from UI import images_rc
 from Toolkit import CartoonServer
@@ -16,7 +15,7 @@ class ServerTray (QtCore.QObject):
 	def __init__ (self, parent = None):
 		QtCore.QObject.__init__ (self, parent)
 
-		self.quitact = QtGui.QAction (self.tr ("&Quit"), self, triggered = sys.exit)
+		self.quitact = QtGui.QAction (self.tr ("&Quit"), self, triggered = QtGui.qApp.quit)
 
 		self.trayicon = QtGui.QSystemTrayIcon (QtGui.QIcon (':/images/icon.png'))
 
@@ -37,7 +36,7 @@ class RPCServerHandler (QtCore.QObject):
 		QtCore.QObject.__init__ (self, parent)
 
 		self.server = SimpleXMLRPCServer.SimpleXMLRPCServer (("", 10207),
-				requestHandler = SimpleXMLRPCServer.SimpleXMLRPCRequestHandler, allow_none = True)
+				requestHandler = SimpleXMLRPCServer.SimpleXMLRPCRequestHandler)
 		self.server.register_introspection_functions()
 		self.server.register_instance (CartoonServer())
 
@@ -81,10 +80,11 @@ if __name__ == "__main__":
 	serverworker.finished.connect (serverworker.deleteLater)
 	server.finished.connect (server.deleteLater)
 
+	QtGui.qApp.aboutToQuit.connect (serverworker.deleteLater)
 	QtGui.qApp.aboutToQuit.connect (server.quit)
-	QtGui.qApp.aboutToQuit.connect (server.wait)
+	QtGui.qApp.aboutToQuit.connect (server.deleteLater)
 
 	server.start()
 
 	app.exec_()
-	sys.exit()
+	QtGui.qApp.quit()

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from Frontend.commonerror import CommonError
+from Frontend.splitprog import SplitProg
 from Frontend.mergererror import MergerError
 from Frontend.loaderror import LoadError
 from Frontend.passworderror import PasswordError

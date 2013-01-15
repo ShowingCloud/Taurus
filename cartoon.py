@@ -46,7 +46,7 @@ if __name__ == "__main__":
 			pe.exec_()
 			islogin = False
 
-	w = MainWindow (l.username, ll.edited, ll.transferred, ll.lastsplittime, ll.lastsplitfile, ll.lastsplitpath, ll.lastmergepath, ll.lasttransferpath)
+	w = MainWindow (ll.rpc, ll.rpcworker, ll.params)
 	w.move (scr.center() - w.rect().center())
 	w.show()
 

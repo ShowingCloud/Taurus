@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
+import os
 import gst
 from PySide import QtCore, QtGui
-
-from Toolkit import RPCHandler
 
 
 class Transcoder (QtCore.QObject):
@@ -15,16 +14,25 @@ class Transcoder (QtCore.QObject):
 	startnewtransfer = QtCore.Signal (unicode, unicode)
 	finished = QtCore.Signal()
 
-	def __init__ (self, srcfile, dstfile, username, path, row, parent = None):
+	def __init__ (self, srcfile, path, row, parent = None):
 
 		QtCore.QObject.__init__ (self, parent)
 
 		self.srcfile = srcfile
-		self.dstfile = dstfile
 		self.row = row
-		self.username = username
 		self.path = path
 		self.parent = parent
+
+		srcfileinfo = QtCore.QFileInfo (srcfile)
+		self.srcpath = QtCore.QDir.toNativeSeparators (srcfileinfo.absolutePath())
+		dstfile = os.path.join (path, srcfileinfo.baseName() + ".mp4")
+		i = 0
+		while os.path.exists (dstfile):
+			i += 1
+			dstfile = os.path.join (path, srcfileinfo.baseName() + "-%02d.mp4" % i)
+		os.close (os.open (dstfile, os.O_CREAT))
+		dstfileinfo = QtCore.QFileInfo (dstfile)
+		self.dstfile = QtCore.QDir.toNativeSeparators (dstfileinfo.absoluteFilePath())
 
 		QtGui.qApp.aboutToQuit.connect (self.remove)
 
@@ -71,20 +79,7 @@ class Transcoder (QtCore.QObject):
 		self.pipeline.set_state (gst.STATE_PLAYING)
 		self.updatemodel.emit (self.row, (None, self.tr ("Transcoding...")))
 
-		self.sendnewtransferred (self.username, self.path)
-
-	def sendnewtransferred (self, username, path):
-		self.rpcworker = RPCHandler()
-		self.rpc = QtCore.QThread()
-		self.rpcworker.moveToThread (self.rpc)
-		self.rpcworker.newtransferredfinished.connect (self.rpc.quit)
-		self.rpcworker.newtransferredfinished.connect (self.rpcworker.deleteLater)
-		self.rpc.finished.connect (self.rpc.deleteLater)
-		self.rpc.start()
-
-		self.startnewtransfer.connect (self.rpcworker.newtransferred)
-		self.startnewtransfer.connect (self.parent.newtransferred)
-		self.startnewtransfer.emit (self.username, self.path)
+		self.startnewtransfer.emit (self.path, self.srcpath)
 
 	def on_message (self, bus, message):
 		if message.type == gst.MESSAGE_EOS:

@@ -150,7 +150,6 @@ class MediaFileChecker (QtCore.QObject):
 		if self.abitrate and self.abitrate < 128000:
 			return False
 
-#		self.status = 1
 		return True
 
 	def got_encaps_type (self, element, probability, caps):
@@ -161,10 +160,15 @@ class MediaFileChecker (QtCore.QObject):
 			self.muxer = "mpegpsmux"
 			self.vencoder = "ffenc_mpeg2video"
 			self.aencoder = "ffenc_mp2"
+		elif name == "video/mpegts":
+			self.demuxer = "mpegtsdemux"
+			self.muxer = "mpegtsmux"
+			self.vencoder = "ffenc_mpeg2video"
+			self.aencoder = "ffenc_mp2"
 		elif name == "video/x-msvideo":
 			self.demuxer = "avidemux"
 			self.muxer = "avimux"
-			self.vencoder = "x264enc"
+			self.vencoder = "xvidenc"
 			self.aencoder = "lamemp3enc"
 		elif name == "video/x-ms-asf":
 			self.demuxer = "asfdemux"
@@ -177,6 +181,8 @@ class MediaFileChecker (QtCore.QObject):
 			self.vencoder = "x264enc"
 			self.aencoder = "faac"
 		else:
+			self.discoveredsignal.emit (self.row, False, {})
+			self.finished.emit()
 			return
 
 	def continueworker (self):

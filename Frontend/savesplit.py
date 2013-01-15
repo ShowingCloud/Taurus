@@ -4,6 +4,7 @@ import os
 from PySide import QtCore, QtGui
 
 from UI import Ui_save
+from Frontend import CommonError
 
 
 class SaveSplit (QtGui.QDialog):
@@ -45,6 +46,10 @@ class SaveSplit (QtGui.QDialog):
 		self.splitfile = self.ui.lineeditcartoonname.text()
 
 		if self.splitpath == "" or self.splitfile == "":
+			return
+		elif len (self.splitfile) > 255:
+			msg = CommonError (self.tr ("Filename too long."))
+			msg.exec_()
 			return
 
 		self.totranscode = self.ui.checkBox.isChecked()

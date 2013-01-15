@@ -21,11 +21,9 @@ class LoginList (QtGui.QDialog):
 		self.rpc = QtCore.QThread()
 		self.rpcworker.moveToThread (self.rpc)
 
-		self.rpcworker.startchecklogin.connect (self.rpcworker.checklogin)
-		self.rpcworker.checkloginsignal.connect (self.login)
-		self.rpcworker.checkloginfinished.connect (self.rpc.quit)
-		self.rpcworker.checkloginfinished.connect (self.rpcworker.deleteLater)
-		self.rpc.finished.connect (self.rpc.deleteLater)
+		self.rpcworker.checkloginfinished.connect (self.login)
+		QtGui.qApp.aboutToQuit.connect (self.rpcworker.deleteLater)
+		QtGui.qApp.aboutToQuit.connect (self.rpc.quit)
 		self.rpc.start()
 		self.rpcworker.startchecklogin.emit (username, password)
 
@@ -35,13 +33,7 @@ class LoginList (QtGui.QDialog):
 		self.timer.timeout.connect (self.setprogressbar)
 		self.timer.start (100)
 
-		self.edited = 0
-		self.transferred = 0
-		self.lastsplittime = None
-		self.lastsplitfile = None
-		self.lastsplitpath = None
-		self.lastmergepath = None
-		self.lasttransferpath = None
+		self.params = None
 
 	@QtCore.Slot()
 	def setprogressbar (self):
@@ -54,16 +46,10 @@ class LoginList (QtGui.QDialog):
 
 	@QtCore.Slot (tuple)
 	def login (self, ret):
-		success, edited, transferred, lastsplittime, lastsplitfile, lastsplitpath, lastmergepath, lasttransferpath = ret
+		success, params = ret
 		if success:
 			self.ui.progressBar.setValue (100)
-			self.edited = edited
-			self.transferred = transferred
-			self.lastsplittime = lastsplittime
-			self.lastsplitfile = lastsplitfile
-			self.lastsplitpath = lastsplitpath
-			self.lastmergepath = lastmergepath
-			self.lasttransferpath = lasttransferpath
+			self.params = params
 			self.accept()
 		else:
 			self.ui.progressBar.setValue (0)

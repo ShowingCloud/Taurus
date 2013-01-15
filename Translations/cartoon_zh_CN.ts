@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="zh_CN">
+<!DOCTYPE TS><TS version="1.1" language="zh_CN">
 <context>
     <name></name>
     <message>
@@ -94,82 +93,82 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="Frontend/mainwindow.py" line="167"/>
+        <location filename="Frontend/mainwindow.py" line="207"/>
         <source>Cartoon Encoding and Uploading Platform</source>
         <translation>动画编码上传平台</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="55"/>
+        <location filename="Frontend/mainwindow.py" line="53"/>
         <source>&amp;Restore</source>
         <translation>还原 (&amp;R)</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="56"/>
+        <location filename="Frontend/mainwindow.py" line="54"/>
         <source>Mi&amp;nimize</source>
         <translation>最小化 (&amp;n)</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="57"/>
+        <location filename="Frontend/mainwindow.py" line="55"/>
         <source>Ma&amp;ximize</source>
         <translation>最大化 (&amp;x)</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="58"/>
+        <location filename="Frontend/mainwindow.py" line="56"/>
         <source>&amp;Quit</source>
         <translation>退出 (&amp;Q)</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="168"/>
+        <location filename="Frontend/mainwindow.py" line="208"/>
         <source>Minimize to system tray. Right click this icon and choose Quit to close.</source>
         <translation>最小化到系统托盘。如需关闭，请右击图标并选择退出。</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="173"/>
+        <location filename="Frontend/mainwindow.py" line="213"/>
         <source>Cartoon Name</source>
         <translation>动画名称</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="173"/>
+        <location filename="Frontend/mainwindow.py" line="213"/>
         <source>Transfer Progress</source>
         <translation>转码进度</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="178"/>
+        <location filename="Frontend/mainwindow.py" line="218"/>
         <source>Status</source>
         <translation>状态</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="173"/>
+        <location filename="Frontend/mainwindow.py" line="213"/>
         <source>Output Path</source>
         <translation>输出路径</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="178"/>
+        <location filename="Frontend/mainwindow.py" line="218"/>
         <source>File Name</source>
         <translation>文件名称</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="178"/>
+        <location filename="Frontend/mainwindow.py" line="218"/>
         <source>Duration</source>
         <translation>时长</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="178"/>
+        <location filename="Frontend/mainwindow.py" line="218"/>
         <source>Resolution</source>
         <translation>分辨率</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="320"/>
+        <location filename="Frontend/mainwindow.py" line="373"/>
         <source>Open</source>
         <translation>打开</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="331"/>
+        <location filename="Frontend/mainwindow.py" line="389"/>
         <source>Not Started</source>
         <translation>未开始</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="372"/>
+        <location filename="Frontend/mainwindow.py" line="778"/>
         <source>There are %d video clips to be merged.</source>
         <translation>共有 %d 个视频准备合并。</translation>
     </message>
@@ -179,69 +178,94 @@ Framerate: Not Less Than 25 Frames/second</source>
         <translation type="obsolete">保存到</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="490"/>
+        <location filename="Frontend/mainwindow.py" line="611"/>
         <source>Finished</source>
         <translation>已完成</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="604"/>
+        <location filename="Frontend/mainwindow.py" line="733"/>
         <source>Select output directory</source>
         <translation>输出路径</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="127"/>
+        <location filename="Frontend/mainwindow.py" line="162"/>
         <source>Video Edit: %d</source>
         <translation>视频编辑：共计 %d 集</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="137"/>
+        <location filename="Frontend/mainwindow.py" line="174"/>
         <source>Video Transfer: %d</source>
         <translation>视频转码：共计 %d 集</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="551"/>
+        <location filename="Frontend/mainwindow.py" line="670"/>
         <source>Transcoding...</source>
         <translation>转码中...</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="381"/>
+        <location filename="Frontend/mainwindow.py" line="398"/>
         <source>Save destination invalid.</source>
-        <translation>保存地址不可用。</translation>
+        <translation type="obsolete">保存地址不可用。</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="523"/>
+        <location filename="Frontend/mainwindow.py" line="647"/>
         <source>Verifying File Parameters...</source>
         <translation>验证文件参数……</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="641"/>
+        <location filename="Frontend/mainwindow.py" line="770"/>
         <source>Video Source Criteria Not Met</source>
         <translation>源视频格式要求未满足</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="112"/>
+        <location filename="Frontend/mainwindow.py" line="145"/>
         <source>Start</source>
         <translation>开始</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="113"/>
+        <location filename="Frontend/mainwindow.py" line="146"/>
         <source>Pause</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="114"/>
+        <location filename="Frontend/mainwindow.py" line="147"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="436"/>
+        <location filename="Frontend/mainwindow.py" line="564"/>
         <source>Start time or stop time invalid.</source>
         <translation>起始时间或结束时间设置有误。</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="419"/>
+        <location filename="Frontend/mainwindow.py" line="542"/>
         <source>Processing...</source>
         <translation>处理中……</translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="134"/>
+        <source>Lost connection to server. Exiting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="458"/>
+        <source>Please input output filename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="462"/>
+        <source>Filename too long.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="467"/>
+        <source>Please input output path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="571"/>
+        <source>Movie title too long.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -255,14 +279,24 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>NewConvert</name>
     <message>
-        <location filename="Frontend/newconvert.py" line="45"/>
+        <location filename="Frontend/newconvert.py" line="50"/>
         <source>Select output directory</source>
         <translation>选择输出路径</translation>
     </message>
     <message>
-        <location filename="Frontend/newconvert.py" line="55"/>
+        <location filename="Frontend/newconvert.py" line="60"/>
         <source>Open</source>
         <translation>打开</translation>
+    </message>
+    <message>
+        <location filename="Frontend/newconvert.py" line="20"/>
+        <source>New Transcode Task</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Frontend/newconvert.py" line="84"/>
+        <source>Please input output path</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -276,38 +310,56 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>SaveSplit</name>
     <message>
-        <location filename="Frontend/savesplit.py" line="30"/>
+        <location filename="Frontend/savesplit.py" line="31"/>
         <source>Select output directory</source>
         <translation>选择输出文件夹</translation>
+    </message>
+    <message>
+        <location filename="Frontend/savesplit.py" line="51"/>
+        <source>Filename too long.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>ServerTray</name>
     <message>
-        <location filename="server.py" line="19"/>
+        <location filename="server.py" line="18"/>
         <source>&amp;Quit</source>
         <translation>退出 (&amp;Q)</translation>
     </message>
     <message>
-        <location filename="server.py" line="26"/>
+        <location filename="server.py" line="25"/>
         <source>Minimize to system tray. Right click this icon and choose Quit to close.</source>
         <translation>最小化到系统托盘。如需关闭，请右击图标并选择退出。</translation>
     </message>
 </context>
 <context>
+    <name>SplitProg</name>
+    <message>
+        <location filename="Frontend/splitprog.py" line="20"/>
+        <source>Splitter Progress</source>
+        <translation>剪切进度</translation>
+    </message>
+    <message>
+        <location filename="Frontend/splitprog.py" line="21"/>
+        <source>Splitting Video...</source>
+        <translation>正在剪切视频……</translation>
+    </message>
+</context>
+<context>
     <name>Transcoder</name>
     <message>
-        <location filename="Backend/transcoder.py" line="106"/>
+        <location filename="Backend/transcoder.py" line="101"/>
         <source>Transcoding...</source>
         <translation>转码中...</translation>
     </message>
     <message>
-        <location filename="Backend/transcoder.py" line="111"/>
+        <location filename="Backend/transcoder.py" line="106"/>
         <source>Paused</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="Backend/transcoder.py" line="92"/>
+        <location filename="Backend/transcoder.py" line="87"/>
         <source>Finished</source>
         <translation>已完成</translation>
     </message>
@@ -315,14 +367,14 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>VideoMerger</name>
     <message>
-        <location filename="Backend/videomerger.py" line="49"/>
+        <location filename="Backend/videomerger.py" line="115"/>
         <source>Hasn&apos;t chosen any video clips.</source>
         <translation>未选择任何视频片段。</translation>
     </message>
     <message>
-        <location filename="Backend/videomerger.py" line="61"/>
+        <location filename="Backend/videomerger.py" line="110"/>
         <source>Save destination invalid.</source>
-        <translation type="obsolete">保存地址不可用。</translation>
+        <translation type="unfinished">保存地址不可用。</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="106"/>
@@ -348,6 +400,11 @@ Framerate: Not Less Than 25 Frames/second</source>
         <location filename="Backend/videomerger.py" line="240"/>
         <source>Finished</source>
         <translation type="obsolete">已完成</translation>
+    </message>
+    <message>
+        <location filename="Backend/videomerger.py" line="69"/>
+        <source>Media type not compatible.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -15,15 +15,6 @@ def time2str (t):
 		return "%i:%02i:%02i.%03i" % (h, m, s, ms)
 
 
-def time2lstr (t):
-	ms, ns = divmod (t, 1000000)
-	s, ms = divmod (ms, 1000)
-	m, s = divmod (s, 60)
-	h, m = divmod (m, 60)
-
-	return "%02i:%02i:%02i.%03i" % (h, m, s, ms)
-
-
 def str2time (s):
 	multi = 1000000000L
 	ns = 0L

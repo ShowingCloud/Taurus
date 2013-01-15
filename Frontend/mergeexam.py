@@ -6,6 +6,7 @@ from ctypes import pythonapi, c_void_p, py_object
 
 from UI import Ui_player
 from Backend import Player
+from Frontend import CommonError
 
 
 class MergeExam (QtGui.QDialog):
@@ -15,8 +16,7 @@ class MergeExam (QtGui.QDialog):
 
 		self.examfile = os.path.join (path, filename)
 		if path == "" or filename == "" or not os.path.exists (path) or not os.path.isdir (path) or not os.path.isfile (self.examfile):
-			msg = QtGui.QMessageBox()
-			msg.setInformativeText (self.tr ("File invalid."))
+			msg = CommonError (self.tr ("File invalid."))
 			msg.exec_()
 			QtGui.qApp.postEvent (self, QtGui.QCloseEvent())
 			return

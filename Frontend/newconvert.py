@@ -5,23 +5,28 @@ from PySide import QtCore, QtGui
 
 from UI import Ui_newconvert
 from Toolkit import NewConvertDelegate
+from Frontend import CommonError
 
 
 class NewConvert (QtGui.QDialog):
 
-	def __init__ (self, lasttransferpath, parent = None):
+	def __init__ (self, lasttransferpath, lasttransfersrcpath, parent = None):
 		QtGui.QDialog.__init__ (self, parent)
 
 		self.ui = Ui_newconvert()
 		self.ui.setupUi (self)
 		self.setWindowFlags (QtCore.Qt.FramelessWindowHint)
 
-#		self.setWindowTitle (self.tr (""))
+		self.setWindowTitle (self.tr ("New Transcode Task"))
 		self.setWindowIcon (QtGui.QIcon (':/images/icon.png'))
 
 		self.transferpath = lasttransferpath
 		if lasttransferpath and os.path.isdir (lasttransferpath):
 			self.ui.lineeditoutputroute.setText (lasttransferpath)
+
+		self.transfersrcpath = QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MoviesLocation)
+		if lasttransfersrcpath and os.path.isdir (lasttransfersrcpath):
+			self.transfersrcpath = lasttransfersrcpath
 
 		self.files = []
 
@@ -52,8 +57,7 @@ class NewConvert (QtGui.QDialog):
 
 	@QtCore.Slot()
 	def on_buttonplus_clicked (self):
-		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"),
-				QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MoviesLocation))[0]
+		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"), self.transfersrcpath)[0]
 		model = self.ui.treeView.model()
 
 		for f in files:
@@ -61,7 +65,7 @@ class NewConvert (QtGui.QDialog):
 			row = model.rowCount()
 			model.insertRow (row)
 
-			model.setData (model.index (row, 0), newfile.absoluteFilePath())
+			model.setData (model.index (row, 0), QtCore.QDir.toNativeSeparators (newfile.absoluteFilePath()))
 
 	def newconvertmodel (self, parent):
 		model = QtGui.QStandardItemModel (0, 2, parent)
@@ -71,12 +75,14 @@ class NewConvert (QtGui.QDialog):
 	def on_buttonconvert_clicked (self):
 		model = self.ui.treeView.model()
 
-		if not os.path.isdir (self.ui.lineeditoutputroute.text()):
-			self.on_buttonbrowse_clicked()
-		else:
+		if os.path.isdir (self.ui.lineeditoutputroute.text()):
 			self.transferpath = self.ui.lineeditoutputroute.text()
+		else:
+			self.on_buttonbrowse_clicked()
 
 		if self.transferpath == "":
+			msg = CommonError (self.tr ("Please input output path"))
+			msg.exec_()
 			return
 
 		self.files = []

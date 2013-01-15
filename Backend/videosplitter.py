@@ -4,23 +4,18 @@ import os
 import gst
 from PySide import QtCore, QtGui
 
-from Toolkit import RPCHandler
-
-gst.debug_set_default_threshold (2)
-
 class VideoSplitter (QtCore.QObject):
 
 	updatemodel = QtCore.Signal (int)
 	finished = QtCore.Signal()
-	startnewsplit = QtCore.Signal (unicode, unicode, unicode, unicode)
+	startnewsplit = QtCore.Signal (unicode, unicode, unicode)
 	addtranscode = QtCore.Signal (unicode)
 
-	def __init__ (self, params, srcfile, dstfile, starttime, duration, title, totranscode, parent = None):
+	def __init__ (self, srcfile, dstfile, starttime, duration, title, totranscode, params, parent = None):
 
 		QtCore.QObject.__init__ (self, parent)
 
 		self.srcfile = srcfile
-		self.dstfile = dstfile
 		self.params = params
 		self.starttime = starttime
 		self.duration = duration
@@ -28,16 +23,32 @@ class VideoSplitter (QtCore.QObject):
 		self.totranscode = totranscode
 		self.parent = parent
 
-	@QtCore.Slot()
-	def startworker (self, username, time, filename, path):
+		self.dstfileinfo = QtCore.QFileInfo (dstfile)
+		if self.dstfileinfo.suffix() == "":
+#			dstfile += ".%s" % (QtCore.QFileInfo (srcfile).suffix())
+			dstfile += ".mp4"
+
+		self.dstfileinfo = QtCore.QFileInfo (dstfile)
+		dstfile = QtCore.QDir.toNativeSeparators (self.dstfileinfo.absoluteFilePath())
+		i = 0
+		while os.path.exists (dstfile):
+			i += 1
+#			dstfile = os.path.join (self.dstfileinfo.absolutePath(), self.dstfileinfo.baseName() + "-%02d.%s" % (i, self.dstfileinfo.suffix()))
+			dstfile = os.path.join (QtCore.QDir.toNativeSeparators (self.dstfileinfo.absolutePath()), self.dstfileinfo.baseName() + "-%02d.mp4" % i)
+		os.close (os.open (dstfile, os.O_CREAT))
+		self.dstfileinfo = QtCore.QFileInfo (dstfile)
+		self.dstfile = QtCore.QDir.toNativeSeparators (self.dstfileinfo.absoluteFilePath())
+
+	@QtCore.Slot (unicode)
+	def startworker (self, timestring):
 
 		self.dowork()
 
 		self.hangchecker = QtCore.QTimer()
 		self.hangchecker.timeout.connect (self.hangcheck)
-		self.hangchecker.start (1000)
+		self.hangchecker.start (3000)
 
-		self.sendnewsplitted (username, time, filename, path)
+		self.startnewsplit.emit (timestring, self.dstfileinfo.fileName(), QtCore.QDir.toNativeSeparators (self.dstfileinfo.absolutePath()))
 
 	def hangcheck (self):
 		if not os.path.exists (self.dstfile) or os.stat (self.dstfile).st_size == 0:
@@ -45,20 +56,6 @@ class VideoSplitter (QtCore.QObject):
 			self.pipeline.set_state (gst.STATE_PLAYING)
 		else:
 			self.hangchecker.stop()
-
-	def sendnewsplitted (self, username, time, filename, path):
-
-		self.rpcworker = RPCHandler()
-		self.rpc = QtCore.QThread()
-		self.rpcworker.moveToThread (self.rpc)
-		self.rpcworker.newsplittedfinished.connect (self.rpc.quit)
-		self.rpcworker.newsplittedfinished.connect (self.rpcworker.deleteLater)
-		self.rpc.finished.connect (self.rpc.deleteLater)
-		self.rpc.start()
-
-		self.startnewsplit.connect (self.rpcworker.newsplitted)
-		self.startnewsplit.connect (self.parent.newsplitted)
-		self.startnewsplit.emit (username, time, filename, path)
 
 	def dowork (self):
 
@@ -80,6 +77,7 @@ class VideoSplitter (QtCore.QObject):
 		vqueue = gst.element_factory_make ('queue2')
 		aqueue = gst.element_factory_make ('queue2')
 
+		'''
 		vencode = gst.element_factory_make (self.params['videoencoder'])
 		if self.params['videoencoder'] in ['x264enc']:
 			index = 1
@@ -98,7 +96,7 @@ class VideoSplitter (QtCore.QObject):
 		if self.params['audioencoder'] in ['lamemp3enc']:
 			index = 1
 		else:
-			idnex = 1000
+			index = 1000
 
 		if self.params['audiobitrate']:
 			try:
@@ -109,13 +107,25 @@ class VideoSplitter (QtCore.QObject):
 			aencode.set_property ('bitrate', 128 * index)
 
 		mux = gst.element_factory_make (self.params['muxer'])
+		'''
+
+		vencode = gst.element_factory_make ('x264enc')
+		vencode.set_property ('bitrate', 1024)
+		aencode = gst.element_factory_make ('faac')
+		aencode.set_property ('bitrate', 128000)
+		mux = gst.element_factory_make ('mp4mux')
+
+		preport = gst.element_factory_make ('progressreport', 'output')
+		preport.set_property ('silent', False)
+		preport.set_property ('update-freq', 1)
 		sink = gst.element_factory_make ('filesink')
 		sink.set_property ('location', self.dstfile)
 
-		self.pipeline.add (vcomp, acomp, vconv, aconv, vident, aident, vqueue, aqueue, vencode, aencode, mux, sink)
-		gst.element_link_many (vconv, vident, vqueue, vencode, mux)
-		gst.element_link_many (aconv, aident, aqueue, aencode, mux)
-		gst.element_link_many (mux, sink)
+		self.pipeline.add (vcomp, acomp, vconv, aconv, vident, aident, vqueue, aqueue, vencode, aencode, mux, preport, sink)
+		gst.element_link_many (vconv, vident, vencode, vqueue, mux)
+		gst.element_link_many (aconv, aident, aencode, aqueue, mux)
+		gst.element_link_many (mux, preport, sink)
+
 		timestamp = 0
 
 		if self.title:
@@ -151,6 +161,66 @@ class VideoSplitter (QtCore.QObject):
 			timestamp += 5 * gst.SECOND
 
 		src = gst.Bin()
+		source = gst.element_factory_make ('filesrc')
+		source.set_property ('location', self.srcfile)
+		decode = gst.element_factory_make ('decodebin2')
+		vconvert = gst.element_factory_make ('ffmpegcolorspace')
+		preport = gst.element_factory_make ('progressreport', 'video')
+		preport.set_property ('silent', False)
+		preport.set_property ('update-freq', 1)
+		fakesink = gst.element_factory_make ('fakesink')
+		decode.connect ('pad-added', self.decode_pad, vconvert, fakesink)
+		caps = gst.element_factory_make ('capsfilter')
+		caps.set_property ('caps', gst.Caps (self.params['videooutcaps']))
+
+		src.add_many (source, preport, decode, vconvert, caps, fakesink)
+		gst.element_link_many (source, decode)
+		gst.element_link_many (vconvert, preport, caps)
+		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
+
+		vsrc = gst.element_factory_make ('gnlsource')
+		vsrc.set_property ('start', timestamp)
+		vsrc.set_property ('duration', self.duration)
+		vsrc.set_property ('media-start', self.starttime)
+		vsrc.set_property ('media-duration', self.duration)
+		vsrc.set_property ('priority', 2)
+		vsrc.set_property ('caps', gst.Caps (self.params['videooutcaps']))
+		vsrc.set_property ('async-handling', False)
+		vsrc.add (src)
+		vcomp.add (vsrc)
+
+		src = gst.Bin()
+		source = gst.element_factory_make ('filesrc')
+		source.set_property ('location', self.srcfile)
+		preport.set_property ('update-freq', 1)
+		decode = gst.element_factory_make ('decodebin2')
+		aconvert = gst.element_factory_make ('audioconvert')
+		preport = gst.element_factory_make ('progressreport', 'audio')
+		preport.set_property ('silent', False)
+		fakesink = gst.element_factory_make ('fakesink')
+		decode.connect ('pad-added', self.decode_pad, aconvert, fakesink)
+		caps = gst.element_factory_make ('capsfilter')
+		caps.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
+
+		src.add_many (source, preport, decode, aconvert, caps, fakesink)
+		gst.element_link_many (source, decode)
+		gst.element_link_many (aconvert, preport, caps)
+		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
+
+		asrc = gst.element_factory_make ('gnlsource')
+		asrc.set_property ('start', timestamp)
+		asrc.set_property ('duration', self.duration)
+		asrc.set_property ('media-start', self.starttime)
+		asrc.set_property ('media-duration', self.duration)
+		asrc.set_property ('priority', 2)
+		asrc.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
+		asrc.set_property ('async-handling', False)
+		asrc.add (src)
+		acomp.add (asrc)
+
+		timestamp += self.duration
+
+		src = gst.Bin()
 		source = gst.element_factory_make ('videotestsrc')
 		source.set_property ('pattern', 2)
 		caps = gst.element_factory_make ('capsfilter')
@@ -162,9 +232,9 @@ class VideoSplitter (QtCore.QObject):
 
 		vsrc = gst.element_factory_make ('gnlsource')
 		vsrc.set_property ('start', 0)
-		vsrc.set_property ('duration', 1000 * gst.SECOND)
+		vsrc.set_property ('duration', timestamp)
 		vsrc.set_property ('media-start', 0)
-		vsrc.set_property ('media-duration', 1000 * gst.SECOND)
+		vsrc.set_property ('media-duration', timestamp)
 		vsrc.set_property ('priority', 1000)
 		vsrc.set_property ('caps', gst.Caps (self.params['videooutcaps']))
 		vsrc.set_property ('async-handling', False)
@@ -186,112 +256,10 @@ class VideoSplitter (QtCore.QObject):
 
 		asrc = gst.element_factory_make ('gnlsource')
 		asrc.set_property ('start', 0)
-		asrc.set_property ('duration', 1000 * gst.SECOND)
+		asrc.set_property ('duration', timestamp)
 		asrc.set_property ('media-start', 0)
-		asrc.set_property ('media-duration', 1000 * gst.SECOND)
+		asrc.set_property ('media-duration', timestamp)
 		asrc.set_property ('priority', 1000)
-		asrc.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
-		asrc.set_property ('async-handling', False)
-		asrc.add (src)
-		acomp.add (asrc)
-
-		src = gst.Bin()
-		source = gst.element_factory_make ('filesrc')
-		source.set_property ('location', self.srcfile)
-		preport = gst.element_factory_make ('progressreport', 'media')
-		preport.set_property ('silent', False)
-		preport.set_property ('update-freq', 1)
-		decode = gst.element_factory_make ('decodebin2')
-		vconvert = gst.element_factory_make ('ffmpegcolorspace')
-		fakesink = gst.element_factory_make ('fakesink')
-		decode.connect ('pad-added', self.decode_pad, vconvert, fakesink)
-		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', gst.Caps (self.params['videooutcaps']))
-
-		src.add_many (source, preport, decode, vconvert, caps, fakesink)
-		gst.element_link_many (source, preport, decode)
-		gst.element_link_many (vconvert, caps)
-		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
-
-		vsrc = gst.element_factory_make ('gnlsource')
-		vsrc.set_property ('start', timestamp)
-		vsrc.set_property ('duration', self.duration)
-		vsrc.set_property ('media-start', self.starttime)
-		vsrc.set_property ('media-duration', self.duration)
-		vsrc.set_property ('priority', 2)
-		vsrc.set_property ('caps', gst.Caps (self.params['videooutcaps']))
-		vsrc.set_property ('async-handling', False)
-		vsrc.add (src)
-		vcomp.add (vsrc)
-
-		src = gst.Bin()
-		source = gst.element_factory_make ('filesrc')
-		source.set_property ('location', self.srcfile)
-		decode = gst.element_factory_make ('decodebin2')
-		aconvert = gst.element_factory_make ('audioconvert')
-		fakesink = gst.element_factory_make ('fakesink')
-		decode.connect ('pad-added', self.decode_pad, aconvert, fakesink)
-		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
-
-		src.add_many (source, decode, aconvert, caps, fakesink)
-		gst.element_link_many (source, decode)
-		gst.element_link_many (aconvert, caps)
-		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
-
-		asrc = gst.element_factory_make ('gnlsource')
-		asrc.set_property ('start', timestamp)
-		asrc.set_property ('duration', self.duration)
-		asrc.set_property ('media-start', self.starttime)
-		asrc.set_property ('media-duration', self.duration)
-		asrc.set_property ('priority', 2)
-		asrc.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
-		asrc.set_property ('async-handling', False)
-		asrc.add (src)
-		acomp.add (asrc)
-
-		timestamp += self.duration
-
-		src = gst.Bin()
-		source = gst.element_factory_make ('videotestsrc')
-		source.set_property ('pattern', 2)
-		preport = gst.element_factory_make ('progressreport', 'final')
-		preport.set_property ('silent', False)
-		preport.set_property ('update-freq', 1)
-		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', gst.Caps (self.params['videooutcaps']))
-
-		src.add_many (source, preport, caps)
-		gst.element_link_many (source, preport, caps)
-		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
-
-		vsrc = gst.element_factory_make ('gnlsource')
-		vsrc.set_property ('start', timestamp)
-		vsrc.set_property ('duration', 1 * gst.SECOND)
-		vsrc.set_property ('media-start', 0)
-		vsrc.set_property ('media-duration', 1 * gst.SECOND)
-		vsrc.set_property ('priority', 20)
-		vsrc.set_property ('caps', gst.Caps (self.params['videooutcaps']))
-		vsrc.set_property ('async-handling', False)
-		vsrc.add (src)
-		vcomp.add (vsrc)
-
-		src = gst.Bin()
-		source = gst.element_factory_make ('audiotestsrc')
-		source.set_property ('wave', 4)
-		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
-
-		src.add_many (source, caps)
-		gst.element_link_many (source, caps)
-		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
-
-		asrc = gst.element_factory_make ('gnlsource')
-		asrc.set_property ('start', timestamp)
-		asrc.set_property ('duration', 1 * gst.SECOND)
-		asrc.set_property ('media-start', 0)
-		asrc.set_property ('media-duration', 1 * gst.SECOND)
-		asrc.set_property ('priority', 20)
 		asrc.set_property ('caps', gst.Caps (self.params['audiooutcaps']))
 		asrc.set_property ('async-handling', False)
 		asrc.add (src)
@@ -330,13 +298,21 @@ class VideoSplitter (QtCore.QObject):
 	def on_message (self, bus, message):
 		if message.type == gst.MESSAGE_EOS:
 			print "EOS"
-			self.pipeline.set_state(gst.STATE_NULL)
-			self.updatemodel.emit (100)
+			self.pipeline.set_state (gst.STATE_NULL)
+			try:
+				self.updatemodel.emit (100)
+				self.finished.emit()
+			except:
+				pass
 		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state (gst.STATE_NULL)
 			err, debug = message.parse_error()
 			print 'Error: %s' % err, debug
-			self.pipeline.set_state(gst.STATE_NULL)
+			self.finished.emit()
 		elif message.type == gst.MESSAGE_ELEMENT:
 			if message.structure.get_name() == "progress":
-				if 'final' in message.src.get_name():
-					self.pipeline.set_state (gst.STATE_NULL)
+				if 'output' in message.src.get_name() or 'video' in message.src.get_name() or 'audio' in message.src.get_name():
+					try:
+						self.updatemodel.emit (message.structure ['percent'])
+					except:
+						pass

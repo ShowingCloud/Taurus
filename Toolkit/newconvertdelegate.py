@@ -34,3 +34,8 @@ class NewConvertDelegate (QtGui.QStyledItemDelegate):
 			self.deleterow.emit (index.row())
 		else:
 			pass
+
+#	def sizeHint (self, option, index):
+#		size = QtGui.QStyledItemDelegate.sizeHint (option, index)
+#		size.setHeight (size.height() + 100)
+#		return size

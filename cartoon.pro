@@ -12,6 +12,7 @@ SOURCES += cartoon.py \
 	Frontend/savesplit.py \
 	Frontend/mergererror.py \
 	Frontend/loaderror.py \
+	Frontend/splitprog.py \
 	\
 	Backend/videosplitter.py \
 	Backend/__init__.py \
