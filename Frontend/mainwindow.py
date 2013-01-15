@@ -40,10 +40,10 @@ class MainWindow (QtGui.QMainWindow):
 		self.createUIdetails()
 		self.creategobject()
 
-		self.transcoding = []
+		self.transcoding = list()
 		self.translisting = TransTaskProcessing
-		self.mergelist = []
-		self.checkers = []
+		self.mergelist = list()
+		self.checkers = list()
 		self.splitchoose = SplitNotChosen
 		self.playerfile = None
 
@@ -119,15 +119,26 @@ class MainWindow (QtGui.QMainWindow):
 		self.mainloop = gobject.MainLoop()
 		self.context = self.mainloop.get_context()
 
+		self.p = self.context.pending
+		self.t = self.context.iteration
+		self.e = QtGui.qApp.processEvents
+
 		self.contexttimer = QtCore.QTimer (QtGui.QApplication.instance())
 		self.contexttimer.timeout.connect (self.contexthandler)
 		self.contexttimer.start (10)
 
 	@QtCore.Slot()
-	def contexthandler (self):
-		while self.context.pending():
-			QtGui.qApp.processEvents()
-			self.context.iteration()
+	def contexthandler (self): # optimized or not?
+		p = self.p
+		t = self.t
+		e = self.e
+		for i in xrange (100):
+			if p():
+				t()
+			else:
+				break
+
+		e()
 
 	@QtCore.Slot()
 	def lostconnection (self):
@@ -339,7 +350,7 @@ class MainWindow (QtGui.QMainWindow):
 		if starttime < 0 or stoptime <= starttime:
 			msg = CommonError (self.tr ("Start time or stop time invalid."))
 			msg.exec_()
-			self.on_buttoncancelbrowse_clicked()
+			self.ui.buttoncancelbrowse.clicked.emit()
 			return
 
 		self.player.setloopsignal.emit (self.ui.lineeditstarttime.text(), self.ui.lineeditendtime.text())
@@ -489,6 +500,7 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.lineeditfilenameblank.setEnabled (False)
 		self.ui.lineeditsaveblank.setEnabled (False)
 		self.ui.buttonbrowse.setEnabled (False)
+		self.ui.buttonexamine.setEnabled (False)
 
 	@QtCore.Slot()
 	def unblockmergeelements (self):
@@ -501,11 +513,12 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.lineeditfilenameblank.setEnabled (True)
 		self.ui.lineeditsaveblank.setEnabled (True)
 		self.ui.buttonbrowse.setEnabled (True)
+		self.ui.buttonexamine.setEnabled (True)
 
 	@QtCore.Slot()
 	def flushmergelist (self):
 		for row in xrange (self.ui.mergeview.model().rowCount()):
-			self.removemergerow (row)
+			self.merger.removerowsignal.emit (row)
 
 	@QtCore.Slot (unicode)
 	def updatefilename (self, filename):
@@ -533,7 +546,6 @@ class MainWindow (QtGui.QMainWindow):
 			return
 
 		if value is not None:
-			print "%d %d" % (row, value)
 			if model.data (model.index (row, 3))[0] < value:
 				if value < 100:
 					model.setData (model.index (row, 3), (value, self.tr ("Processing...")))
@@ -581,15 +593,17 @@ class MainWindow (QtGui.QMainWindow):
 		outputfile = os.path.join (ss.splitpath, ss.splitfile)
 
 		self.splitter = VideoSplitter (self.playerfile, outputfile, starttime, duration, title, ss.totranscode, self.player.params, self)
-		self.splitter.finished.connect (self.splitter.deleteLater)
 		self.splitter.addtranscode.connect (self.addtranscode)
 		self.splitter.startnewsplit.connect (self.newsplitted)
 		self.splitter.startworker (timestring)
 
 		self.splitprog = SplitProg()
+		self.splitprog.move (self.pos() + self.rect().center() - self.splitprog.rect().center())
 		self.splitter.updatemodel.connect (self.splitprog.setprogressbar)
-		self.splitter.finished.connect (self.splitprog.hide)
-		self.splitprog.exec_()
+		self.splitter.finished.connect (self.splitprog.accept)
+
+		if not self.splitprog.exec_() == QtGui.QDialog.Accepted:
+			self.splitter.finished.emit()
 
 	@QtCore.Slot (int, tuple)
 	def updatetransmodel (self, row, value):
@@ -642,7 +656,6 @@ class MainWindow (QtGui.QMainWindow):
 				model.setData (model.index (row, 0), newfile.fileName())
 				model.setData (model.index (row, 1), 0)
 				model.setData (model.index (row, 2), self.tr ("Verifying File Parameters..."))
-
 				model.setData (model.index (row, 3), newpath)
 
 				checker = MediaFileChecker (QtCore.QDir.toNativeSeparators (newfile.absoluteFilePath()), len (self.checkers))
@@ -653,7 +666,6 @@ class MainWindow (QtGui.QMainWindow):
 				self.transcoding.append ({"worker": None, "status": TransTaskVerifying})
 				checker.startworker()
 
-	# Not in use
 	@QtCore.Slot (unicode)
 	def addtranscode (self, filename):
 		model = self.ui.transview.model()
@@ -757,6 +769,7 @@ class MainWindow (QtGui.QMainWindow):
 			le = LoadError()
 			le.move (self.pos() + self.rect().center() - le.rect().center())
 			le.exec_()
+#			le.show()
 
 		if checker["operation"] == "Merge":
 
@@ -775,11 +788,11 @@ class MainWindow (QtGui.QMainWindow):
 				self.ui.labelmerge.setText (self.tr ("There are %d video clips to be merged.") % rownum)
 
 			else:
-				model.setData (model.index (mergerow, 1), "%s" % (time2str (params["length"])))
-				model.setData (model.index (mergerow, 2), "%d X %d" % (params["videowidth"], params["videoheight"]))
+				model.setData (model.index (mergerow, 1), "%s" % (time2str (params.get ("length"))))
+				model.setData (model.index (mergerow, 2), "%d X %d" % (params.get ("videowidth"), params.get ("videoheight")))
 				self.mergelist[mergerow] = MergeTaskReadyToProcess
 
-			self.merger.verifiedtasksignal.emit (row, params, verified)
+			self.merger.verifiedtasksignal.emit (mergerow, params, verified)
 
 		elif checker["operation"] == "Player":
 
@@ -825,6 +838,8 @@ class MainWindow (QtGui.QMainWindow):
 			if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
 				if obj == self.ui.lineeditstarttime:
 					self.player.seekstarttimesignal.emit (self.ui.lineeditstarttime.text())
+				elif obj == self.ui.lineeditleadertitle:
+					self.ui.buttonsave.clicked.emit()
 
 		return QtGui.QWidget.eventFilter (self, obj, event)
 
@@ -861,7 +876,7 @@ class MainWindow (QtGui.QMainWindow):
 
 	def mouseDoubleClickEvent (self, event):
 		super (MainWindow, self).mouseDoubleClickEvent (event)
-		self.on_buttonmaximize_clicked()
+		self.ui.buttonmaximize.clicked.emit()
 
 	def frameMouseRelease (self, event):
 		super (MainWindow, self).mouseReleaseEvent (event)
@@ -871,11 +886,13 @@ class MainWindow (QtGui.QMainWindow):
 
 	def resizeEvent (self, event):
 		pixmap = QtGui.QPixmap (self.size())
-		painter = QtGui.QPainter()
-		painter.begin (pixmap)
-		painter.fillRect (pixmap.rect(), QtCore.Qt.white)
-		painter.setBrush (QtCore.Qt.black)
-		painter.drawRoundRect (pixmap.rect(), 3, 3)
-		painter.end()
+
+		if not self.isMaximized():
+			painter = QtGui.QPainter()
+			painter.begin (pixmap)
+			painter.fillRect (pixmap.rect(), QtCore.Qt.white)
+			painter.setBrush (QtCore.Qt.black)
+			painter.drawRoundRect (pixmap.rect(), 3, 3)
+			painter.end()
 
 		self.setMask (pixmap.createMaskFromColor (QtCore.Qt.white))

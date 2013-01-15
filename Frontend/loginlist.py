@@ -10,7 +10,7 @@ from Toolkit import RPCHandler
 
 class LoginList (QtGui.QDialog):
 
-	def __init__ (self, username, password, parent = None):
+	def __init__ (self, username, password, key, parent = None):
 		QtGui.QDialog.__init__ (self, parent)
 
 		self.ui = Ui_loginlist()
@@ -25,7 +25,7 @@ class LoginList (QtGui.QDialog):
 		QtGui.qApp.aboutToQuit.connect (self.rpcworker.deleteLater)
 		QtGui.qApp.aboutToQuit.connect (self.rpc.quit)
 		self.rpc.start()
-		self.rpcworker.startchecklogin.emit (username, password)
+		self.rpcworker.startchecklogin.emit (username, password, key)
 
 		self.progress = 0
 		self.ui.progressBar.setValue (self.progress)
@@ -42,7 +42,7 @@ class LoginList (QtGui.QDialog):
 
 		if self.progress > 200:
 			self.ui.progressBar.setValue (0)
-			self.reject()
+			self.done (2)
 
 	@QtCore.Slot (tuple)
 	def login (self, ret):
@@ -53,7 +53,10 @@ class LoginList (QtGui.QDialog):
 			self.accept()
 		else:
 			self.ui.progressBar.setValue (0)
-			self.reject()
+			if params.get ('except'):
+				self.done (2)
+			else:
+				self.reject()
 
 	@QtCore.Slot()
 	def on_pushButton_clicked (self):

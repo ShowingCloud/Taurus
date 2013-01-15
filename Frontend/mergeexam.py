@@ -105,7 +105,7 @@ class MergeExam (QtGui.QDialog):
 
 	@QtCore.Slot()
 	def on_buttonmaximize_clicked (self):
-		if (self.isMaximized()):
+		if self.isMaximized():
 			self.ui.buttonmaximize.setIcon (QtGui.QIcon (':/images/maximize.png'))
 			self.showNormal()
 		else:
@@ -160,11 +160,13 @@ class MergeExam (QtGui.QDialog):
 
 	def resizeEvent (self, event):
 		pixmap = QtGui.QPixmap (self.size())
-		painter = QtGui.QPainter()
-		painter.begin (pixmap)
-		painter.fillRect (pixmap.rect(), QtCore.Qt.white)
-		painter.setBrush (QtCore.Qt.black)
-		painter.drawRoundRect (pixmap.rect(), 3, 3)
-		painter.end()
+
+		if not self.isMaximized():
+			painter = QtGui.QPainter()
+			painter.begin (pixmap)
+			painter.fillRect (pixmap.rect(), QtCore.Qt.white)
+			painter.setBrush (QtCore.Qt.black)
+			painter.drawRoundRect (pixmap.rect(), 3, 3)
+			painter.end()
 
 		self.setMask (pixmap.createMaskFromColor (QtCore.Qt.white))

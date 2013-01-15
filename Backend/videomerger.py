@@ -25,7 +25,7 @@ class VideoMerger (QtCore.QObject):
 
 		self.parent = parent
 		self.path = None
-		self.srcfiles = []
+		self.srcfiles = list()
 
 		self.bus = None
 		self.params = None
@@ -48,7 +48,7 @@ class VideoMerger (QtCore.QObject):
 	@QtCore.Slot (int, dict, bool)
 	def verifiedtask (self, row, params, verified):
 
-		self.srcfiles[row].update ({'effective': verified, 'params': params})
+		self.srcfiles[row]['effective'] = verified
 		self.srcfiles[row].update (params)
 
 		if not verified:
@@ -56,7 +56,7 @@ class VideoMerger (QtCore.QObject):
 
 		num = 0
 		for i in xrange (self.items):
-			if self.srcfiles[i]['effective']:
+			if self.srcfiles[i].get ('effective'):
 				num += 1
 		self.effectives = num
 
@@ -72,14 +72,13 @@ class VideoMerger (QtCore.QObject):
 
 	def checkcompat (self, common, new):
 
-		if not common['muxer'] == new['muxer']:
-			pass
-#			return False
-		if not common['videoheight'] == new['videoheight']:
+		if not common.get ('muxer') == new.get ('muxer'):
 			return False
-		if not common['videowidth'] == new['videowidth']:
+		if not common.get ('videoheight') == new.get ('videoheight'):
 			return False
-		if not common['videoframerate'] == new['videoframerate']:
+		if not common.get ('videowidth') == new.get ('videowidth'):
+			return False
+		if not common.get ('videoframerate') == new.get ('videoframerate'):
 			return False
 
 		return True
@@ -96,10 +95,10 @@ class VideoMerger (QtCore.QObject):
 		num = 0
 		params = None
 		for i in xrange (self.items):
-			if self.srcfiles[i]['effective']:
+			if self.srcfiles[i].get ('effective'):
 				num += 1
 				if not params:
-					params = self.srcfiles[i]['params']
+					params = self.srcfiles[i]
 		self.effectives = num
 		self.params = params
 
@@ -116,13 +115,21 @@ class VideoMerger (QtCore.QObject):
 			msg.exec_()
 			return
 
+		for i in xrange (self.items):
+			if self.srcfiles[i].get ('effective'):
+				self.defaultsrcfile = self.srcfiles[i]
+				break
+
 		dstfileinfo = QtCore.QFileInfo (os.path.join (path, filename))
+		if dstfileinfo.suffix() == "":
+			dstfile = "%s.%s" % (dstfileinfo.absoluteFilePath(), QtCore.QFileInfo (self.defaultsrcfile.get ('srcfile')).suffix())
+			dstfileinfo = QtCore.QFileInfo (dstfile)
 		dstfile = QtCore.QDir.toNativeSeparators (dstfileinfo.absoluteFilePath())
 		i = 0
 		while os.path.exists (dstfile):
 			i += 1
-#			dstfile = os.path.join (dstfileinfo.absolutePath(), dstfileinfo.baseName() + "-%02d.%s" % (i, dstfileinfo.suffix()))
-			dstfile = os.path.join (QtCore.QDir.toNativeSeparators (dstfileinfo.absolutePath()), dstfileinfo.baseName() + "-%02d.mp4" % i)
+			dstfile = os.path.join (QtCore.QDir.toNativeSeparators (dstfileinfo.absolutePath()),
+					"%s-%02d.%s" % (dstfileinfo.baseName(), i, dstfileinfo.suffix()))
 		os.close (os.open (dstfile, os.O_CREAT))
 		dstfileinfo = QtCore.QFileInfo (dstfile)
 
@@ -144,59 +151,23 @@ class VideoMerger (QtCore.QObject):
 
 		self.pipeline = gst.Pipeline()
 		vcomp = gst.element_factory_make ('gnlcomposition')
-		vcomp.set_property ('async-handling', False)
 		acomp = gst.element_factory_make ('gnlcomposition')
-		acomp.set_property ('async-handling', False)
 		vconv = gst.element_factory_make ('ffmpegcolorspace')
 		vcomp.connect ("pad-added", self.comp_pad, vconv)
 		aconv = gst.element_factory_make ('audioconvert')
 		acomp.connect ("pad-added", self.comp_pad, aconv)
 		vident = gst.element_factory_make ('identity')
 		vident.set_property ('single-segment', True)
-		vident.set_property ('sync', True)
+#		vident.set_property ('sync', True)
 		aident = gst.element_factory_make ('identity')
 		aident.set_property ('single-segment', True)
-		aident.set_property ('sync', True)
-		vqueue = gst.element_factory_make ('queue2')
-		aqueue = gst.element_factory_make ('queue2')
+#		aident.set_property ('sync', True)
 
-		'''
-		vencode = gst.element_factory_make (self.srcfiles[0]['videoencoder'])
-		if self.srcfiles[0]['videoencoder'] in ['x264enc']:
-			index = 1
-		else:
-			index = 1000
-
-		if self.srcfiles[0]['videobitrate']:
-			try:
-				vencode.set_property ('bitrate', round (float (self.srcfiles[0]['videobitrate']) / 1000) * index)
-			except:
-				vencode.set_property ('bitrate', 1024 * index)
-		else:
-			vencode.set_property ('bitrate', 1024 * index)
-
-		aencode = gst.element_factory_make (self.srcfiles[0]['audioencoder'])
-		if self.srcfiles[0]['audioencoder'] in ['lamemp3enc']:
-			index = 1
-		else:
-			index = 1000
-
-		if self.srcfiles[0]['audiobitrate']:
-			try:
-				aencode.set_property ('bitrate', round (float (self.srcfiles[0]['audiobitrate']) / 1000) * index)
-			except:
-				aencode.set_property ('bitrate', 128 * index)
-		else:
-			aencode.set_property ('bitrate', 128 * index)
-
-		mux = gst.element_factory_make (self.srcfiles[0]['muxer'])
-		'''
-
-		vencode = gst.element_factory_make ('x264enc')
-		vencode.set_property ('bitrate', 1024)
-		aencode = gst.element_factory_make ('faac')
-		aencode.set_property ('bitrate', 128000)
-		mux = gst.element_factory_make ('mp4mux')
+		vencode = gst.element_factory_make (self.defaultsrcfile.get ('videoencoder'))
+		vencode.set_property ('bitrate', self.defaultsrcfile.get ('highestvideobitrate'))
+		aencode = gst.element_factory_make (self.defaultsrcfile.get ('audioencoder'))
+		aencode.set_property ('bitrate', self.defaultsrcfile.get ('highestaudiobitrate'))
+		mux = gst.element_factory_make (self.defaultsrcfile.get ('muxer'))
 
 		preport = gst.element_factory_make ('progressreport', 'output')
 		preport.set_property ('silent', False)
@@ -204,83 +175,83 @@ class VideoMerger (QtCore.QObject):
 		sink = gst.element_factory_make ('filesink')
 		sink.set_property ('location', self.dstfile)
 
-		self.pipeline.add (vcomp, acomp, vconv, aconv, vident, aident, vqueue, aqueue, vencode, aencode, mux, preport, sink)
-		gst.element_link_many (vconv, vident, vqueue, vencode, mux)
-		gst.element_link_many (aconv, aident, aqueue, aencode, mux)
+		self.pipeline.add (vcomp, acomp, vconv, aconv, vident, aident, vencode, aencode, mux, preport, sink)
+		gst.element_link_many (vconv, vident, vencode, mux)
+		gst.element_link_many (aconv, aident, aencode, mux)
 		gst.element_link_many (mux, preport, sink)
 
 		timestamp = 0
 
 		for i in xrange (self.items):
 
-			if not self.srcfiles[i]['effective']:
+			if not self.srcfiles[i].get ('effective'):
 				continue
 
 			src = gst.Bin()
 			source = gst.element_factory_make ('filesrc')
-			source.set_property ('location', self.srcfiles[i]['srcfile'])
+			source.set_property ('location', self.srcfiles[i].get ('srcfile'))
+			decode = gst.element_factory_make ('decodebin2')
+			decode.set_property ('expose-all-streams', False)
+			decode.set_property ('caps', gst.Caps (self.srcfiles[i].get ('videooutcaps')))
+			vconvert = gst.element_factory_make ('ffmpegcolorspace')
+			decode.connect ('pad-added', self.decode_pad, vconvert)
 			preport = gst.element_factory_make ('progressreport', 'video %d' % i)
 			preport.set_property ('silent', False)
 			preport.set_property ('update-freq', 1)
-			decode = gst.element_factory_make ('decodebin2')
-			vconvert = gst.element_factory_make ('ffmpegcolorspace')
-			fakesink = gst.element_factory_make ('fakesink')
-			decode.connect ('pad-added', self.decode_pad, vconvert, fakesink)
 			caps = gst.element_factory_make ('capsfilter')
-			caps.set_property ('caps', self.srcfiles[i]['videooutcaps'])
+			caps.set_property ('caps', gst.Caps (self.srcfiles[i].get ('videooutcaps')))
 
-			src.add_many (source, preport, decode, vconvert, caps, fakesink)
-			gst.element_link_many (source, preport, decode)
-			gst.element_link_many (vconvert, caps)
+			src.add_many (source, preport, decode, vconvert, caps)
+			gst.element_link_many (source, decode)
+			gst.element_link_many (vconvert, preport, caps)
 			src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
 			vsrc = gst.element_factory_make ('gnlsource')
 			vsrc.set_property ('start', timestamp)
-			vsrc.set_property ('duration', self.srcfiles[i]['length'])
+			vsrc.set_property ('duration', self.srcfiles[i].get ('length'))
 			vsrc.set_property ('media-start', 0)
-			vsrc.set_property ('media-duration', self.srcfiles[i]['length'])
+			vsrc.set_property ('media-duration', self.srcfiles[i].get ('length'))
 			vsrc.set_property ('priority', self.items - i)
-			vsrc.set_property ('caps', self.srcfiles[i]['videooutcaps'])
-			vsrc.set_property ('async-handling', False)
+			vsrc.set_property ('caps', gst.Caps (self.srcfiles[i].get ('videooutcaps')))
 			vsrc.add (src)
 			vcomp.add (vsrc)
 
 			src = gst.Bin()
 			source = gst.element_factory_make ('filesrc')
-			source.set_property ('location', self.srcfiles[i]['srcfile'])
+			source.set_property ('location', self.srcfiles[i].get ('srcfile'))
+			decode = gst.element_factory_make ('decodebin2')
+			decode.set_property ('expose-all-streams', False)
+			decode.set_property ('caps', gst.Caps (self.srcfiles[i].get ('audiooutcaps')))
+			aconvert = gst.element_factory_make ('audioconvert')
+			decode.connect ('pad-added', self.decode_pad, aconvert)
 			preport = gst.element_factory_make ('progressreport', 'audio %d' % i)
 			preport.set_property ('silent', False)
 			preport.set_property ('update-freq', 1)
-			decode = gst.element_factory_make ('decodebin2')
-			aconvert = gst.element_factory_make ('audioconvert')
-			fakesink = gst.element_factory_make ('fakesink')
-			decode.connect ('pad-added', self.decode_pad, aconvert, fakesink)
 			caps = gst.element_factory_make ('capsfilter')
-			caps.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
+			caps.set_property ('caps', gst.Caps (self.srcfiles[i].get ('audiooutcaps')))
 
-			src.add_many (source, preport, decode, aconvert, caps, fakesink)
-			gst.element_link_many (source, preport, decode)
-			gst.element_link_many (aconvert, caps)
+			src.add_many (source, preport, decode, aconvert, caps)
+			gst.element_link_many (source, decode)
+			gst.element_link_many (aconvert, preport, caps)
 			src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
 			asrc = gst.element_factory_make ('gnlsource')
 			asrc.set_property ('start', timestamp)
-			asrc.set_property ('duration', self.srcfiles[i]['length'])
+			asrc.set_property ('duration', self.srcfiles[i].get ('length'))
 			asrc.set_property ('media-start', 0)
-			asrc.set_property ('media-duration', self.srcfiles[i]['length'])
+			asrc.set_property ('media-duration', self.srcfiles[i].get ('length'))
 			asrc.set_property ('priority', self.items - i)
-			asrc.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
-			asrc.set_property ('async-handling', False)
+			asrc.set_property ('caps', gst.Caps (self.srcfiles[i].get ('audiooutcaps')))
 			asrc.add (src)
 			acomp.add (asrc)
 
-			timestamp += self.srcfiles[i]['length']
+			timestamp += self.srcfiles[i].get ('length')
 
 		src = gst.Bin()
 		source = gst.element_factory_make ('videotestsrc')
 		source.set_property ('pattern', 2)
 		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', self.srcfiles[i]['videooutcaps'])
+		caps.set_property ('caps', gst.Caps (self.srcfiles[i].get ('videooutcaps')))
 
 		src.add_many (source, caps)
 		gst.element_link_many (source, caps)
@@ -292,8 +263,7 @@ class VideoMerger (QtCore.QObject):
 		vsrc.set_property ('media-start', 0)
 		vsrc.set_property ('media-duration', timestamp)
 		vsrc.set_property ('priority', self.items * 10)
-		vsrc.set_property ('caps', self.srcfiles[i]['videooutcaps'])
-		vsrc.set_property ('async-handling', False)
+		vsrc.set_property ('caps', gst.Caps (self.srcfiles[i].get ('videooutcaps')))
 		vsrc.add (src)
 		vcomp.add (vsrc)
 
@@ -304,7 +274,7 @@ class VideoMerger (QtCore.QObject):
 		source.set_property ('can-activate-pull', True)
 		source.set_property ('can-activate-push', True)
 		caps = gst.element_factory_make ('capsfilter')
-		caps.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
+		caps.set_property ('caps', gst.Caps (self.srcfiles[i].get ('audiooutcaps')))
 
 		src.add_many (source, caps)
 		gst.element_link_many (source, caps)
@@ -316,8 +286,7 @@ class VideoMerger (QtCore.QObject):
 		asrc.set_property ('media-start', 0)
 		asrc.set_property ('media-duration', timestamp)
 		asrc.set_property ('priority', self.items * 10)
-		asrc.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
-		asrc.set_property ('async-handling', False)
+		asrc.set_property ('caps', gst.Caps (self.srcfiles[i].get ('audiooutcaps')))
 		asrc.add (src)
 		acomp.add (asrc)
 
@@ -331,23 +300,31 @@ class VideoMerger (QtCore.QObject):
 		self.bus = self.pipeline.get_bus()
 		self.bus.enable_sync_message_emission()
 		self.bus.add_signal_watch()
-		self.bus.connect ("message", self.on_message)
-		self.bus.connect ("sync-message", self.on_message)
+		self.bus.connect ("message::eos", self.on_message)
+		self.bus.connect ("message::error", self.on_message)
+		self.bus.connect ("sync-message::element", self.on_message)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
 
 	def comp_pad (self, comp, pad, nextcomp):
 		nextpad = nextcomp.get_compatible_pad (pad, pad.get_caps())
-		if nextpad and not nextpad.is_linked():
-			pad.link (nextpad)
-
-	def decode_pad (self, comp, pad, nextcomp, fakesink):
-		nextpad = nextcomp.get_compatible_pad (pad, pad.get_caps())
-		if nextpad and not nextpad.is_linked():
-			pad.link (nextpad)
+		if nextpad:
+			if not nextpad.is_linked():
+				pad.link (nextpad)
+			else:
+				print "Composition pad already linked"
 		else:
-			nextpad = fakesink.get_pad ("sink")
-			pad.link (nextpad)
+			print "Composition pad not useful"
+
+	def decode_pad (self, comp, pad, nextcomp):
+		nextpad = nextcomp.get_compatible_pad (pad, pad.get_caps())
+		if nextpad:
+			if not nextpad.is_linked():
+				pad.link (nextpad)
+			else:
+				print "Decode pad already linked"
+		else:
+			print "Decode pad not useful"
 
 	def on_message (self, bus, message):
 		if message.type == gst.MESSAGE_EOS:
@@ -367,7 +344,7 @@ class VideoMerger (QtCore.QObject):
 				if 'video' in message.src.get_name() or 'audio' in message.src.get_name():
 					try:
 						num = int (re.findall (r'\d+', message.src.get_name())[0])
-						progress = message.structure ['percent']
+						progress = message.structure['current'] * gst.SECOND * 100 / self.srcfiles[num].get ('length')
 						self.updatemodel.emit (num, progress)
 					except:
 						print "error processing"

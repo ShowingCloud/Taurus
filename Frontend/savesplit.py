@@ -16,7 +16,7 @@ class SaveSplit (QtGui.QDialog):
 		self.ui.setupUi (self)
 		self.setWindowFlags (QtCore.Qt.FramelessWindowHint)
 
-#		self.setWindowTitle (self.tr (""))
+		self.setWindowTitle (self.tr ('Save split file as...'))
 		self.setWindowIcon (QtGui.QIcon (':/images/icon.png'))
 
 		self.splitpath = path
@@ -25,6 +25,9 @@ class SaveSplit (QtGui.QDialog):
 
 		self.splitfile = None
 		self.totranscode = False
+
+		self.ui.lineeditcartoonname.installEventFilter (self)
+		self.ui.lineeditcartoonname.setFocus()
 
 	@QtCore.Slot()
 	def on_buttonbrowse_clicked (self):
@@ -70,6 +73,14 @@ class SaveSplit (QtGui.QDialog):
 		painter.end()
 
 		self.setMask (pixmap.createMaskFromColor (QtCore.Qt.white))
+
+	def eventFilter (self, obj, event):
+		if obj == self.ui.lineeditcartoonname:
+			if event.type() == QtCore.QEvent.KeyPress:
+				if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
+					self.ui.buttonsave.clicked.emit()
+
+		return QtGui.QWidget.eventFilter (self, obj, event)
 
 	def keyPressEvent (self, event):
 		super (SaveSplit, self).keyPressEvent (event)

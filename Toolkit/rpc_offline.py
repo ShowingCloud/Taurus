@@ -2,15 +2,14 @@
 
 import time
 from datetime import datetime, timedelta
-import hashlib, random, types, string
-import json, base64
+import hashlib, random, types
+import json
 import xmlrpclib
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from PySide import QtCore, QtGui
 
 from Models import User, Engine, Session
-from config import ALLOW_NOWDG_LOGIN, ALLOW_NOWDG_REG
 
 
 class SecureSession (object):
@@ -32,11 +31,12 @@ class SecureSession (object):
 	def _decrypt (self, params):
 
 		while len (params) > len (self._longtoken):
-			self._token = hashlib.sha512 (self._token).hexdigest()
+			self._token = hashlib.md5 (self._token).hexdigest()
 			self._longtoken = ''.join ([self._longtoken, self._token])
 
+		cleartext = ''.join ([chr (a ^ ord (b)) for a, b in zip (params, self._longtoken)])
+
 		try:
-			cleartext = ''.join ([chr (ord (a) ^ ord (b)) for a, b in zip (base64.b64decode (params), self._longtoken)]).decode ('utf-8')
 			return self.jdec (cleartext)
 		except:
 			return None
@@ -46,10 +46,10 @@ class SecureSession (object):
 		params = self.jenc (params)
 
 		while len (params) > len (self._longtoken):
-			self._token = hashlib.sha512 (self._token).hexdigest()
+			self._token = hashlib.md5 (self._token).hexdigest()
 			self._longtoken = ''.join ([self._longtoken, self._token])
 
-		cipher = base64.b64encode (''.join ([chr (ord (a) ^ ord (b)) for a, b in zip (params.encode ('utf-8'), self._longtoken)]))
+		cipher = [ord (a) ^ ord (b) for a, b in zip (params, self._longtoken)]
 		return cipher
 
 	def _checkin (self, params):
@@ -86,18 +86,13 @@ class SecureSession (object):
 				return None
 
 			record = q.first()
-			password = record.Password
-
-			if len (password) <= 10:
-				self._token = self._username
-			else:
-				self._token = record.Password
+			self._token = record.Password
 			self._longtoken = ''
 			self._user = record.id
 
 		ret = self._decrypt (hello)
-		if ret and type (ret) is types.DictType and ret.get ('hello') == hashlib.sha512 (self._hello).hexdigest():
-			return ret.get ('newtoken')
+		if ret and type (ret) is types.DictType and ret.get ('hello') == hashlib.md5 (self._hello).hexdigest():
+			return True
 
 		return None
 
@@ -136,11 +131,9 @@ class SecureSession (object):
 		return True
 
 
-PreLoginFailed, PreLoginConnFailed, PreLoginOK = xrange (3)
-
 class RPCHandler (QtCore.QObject, SecureSession):
 
-	startchecklogin = QtCore.Signal (unicode, unicode, unicode)
+	startchecklogin = QtCore.Signal (unicode, unicode)
 	checkloginfinished = QtCore.Signal (tuple)
 	newmergedsignal = QtCore.Signal (dict)
 	newsplittedsignal = QtCore.Signal (dict)
@@ -160,151 +153,17 @@ class RPCHandler (QtCore.QObject, SecureSession):
 
 		self.rpc = xmlrpclib.ServerProxy ("http://61.147.79.115:10207")
 
-	def PrepareLogin (self, username, password, key):
+	@QtCore.Slot (unicode, unicode)
+	def checklogin (self, username, password):
 
-		ret = PreLoginFailed, None, None
-
-		if key == '4646464646464646' and not ALLOW_NOWDG_LOGIN:
-			return ret
-
-		for i in xrange (3):
-			try:
-				salt = self.rpc.GetSalt (self.jenc (username))
-				ret = PreLoginFailed, None, None
-			except:
-				ret = PreLoginConnFailed, None, None
-				continue
-
-			try:
-				salt = self.jdec (salt)
-				if not salt == None:
-					ret = PreLoginOK, None, None
-					break
-			except:
-				continue
-
-		if not ret[0] == PreLoginOK:
-			return ret
-
-		if salt == '':
-			if key == '4646464646464646' and not ALLOW_NOWDG_REG:
-				return ret
-
-			token = username
-		else:
-			token = '%s#%s$%s@%s' % (username, password, key, salt)
-			token = hashlib.sha512 (token).hexdigest()
-			token = '%s%s' % (salt, token)
-
-		newsalt = ''.join (random.choice (string.printable) for i in xrange (10))
-		newtoken = '%s#%s$%s@%s' % (username, password, key, newsalt)
-		newtoken = hashlib.sha512 (newtoken).hexdigest()
-		newtoken = '%s%s' % (newsalt, newtoken)
-
-		return PreLoginOK, token, newtoken
-
-	@QtCore.Slot (unicode, unicode, unicode)
-	def checklogin (self, username, password, key):
-
-		self._username = username
-
-		ret, token, newtoken = self.PrepareLogin (username, password, key)
-		if ret == PreLoginFailed:
-			self.checkloginfinished.emit ((False, dict()))
-			return
-		elif ret == PreLoginConnFailed:
-			self.checkloginfinished.emit ((False, {'except': True}))
-			return
-
-		self._token = token
-		self._longtoken = ''
-
-		hello = {'hello': hashlib.sha512 (self._hello).hexdigest(),
-				'arandom': random.randint (0, 2e9),
-				'zrandom': random.randint (0, 2e9),
-				'newtoken': newtoken}
-		hello = self._encrypt (hello)
-
-		ret = None
-		for i in xrange (3):
-			try:
-				ret = self.rpc.CheckLogin (self.jenc (username), self.jenc (hello))
-				resp = (False, dict())
-			except:
-				resp = (False, {'except': True})
-				continue
-
-			try:
-				ret = self.jdec (ret)
-				if ret:
-					resp = True
-					break
-			except:
-				continue
-
-		if not resp == True:
-			self.checkloginfinished.emit (resp)
-			return
-
-		ret = self._decrypt (ret)
-		if ret and type (ret) is types.DictType and ret.get ('ret'):
-			if self._readnewsession (ret):
-				self.checkloginfinished.emit ((True, ret.get ('Parameters')))
-
-				self.renewtimer = QtCore.QTimer()
-				self.renewtimer.timeout.connect (self.renewsession)
-				self.renewtimer.start (180000)
-				return
-
-		self.checkloginfinished.emit ((False, dict()))
+		self.checkloginfinished.emit ((True, dict()))
+		return
 
 	def renewsession (self):
-		while True:
-			try:
-				ret = self.rpc.RenewSession (self.jenc (self._session))
-				ret = self.jdec (ret)
-			except:
-				time.sleep (10)
-				continue
-
-			if not ret:
-				self.lostconnection.emit()
-				time.sleep (10)
-				continue
-
-			ret = self._decrypt (ret)
-			if ret and type (ret) is types.DictType and ret.get ('ret'):
-				self._readnewsession (ret)
-				break
-
-			self.lostconnection.emit()
-			time.sleep (10)
-			continue
+		return
 
 	def _sendparams (self, params, func):
-		params = self._encrypt (params)
-
-		while True:
-			try:
-				ret = func (self.jenc (self._session), self.jenc (params))
-				ret = self.jdec (ret)
-			except:
-				time.sleep (10)
-				continue
-
-			if not ret:
-				self.lostconnection.emit()
-				time.sleep (10)
-				continue
-
-			ret = self._decrypt (ret)
-			if ret and type (ret) is types.DictType and ret.get ('ret'):
-				self._readnewsession (ret)
-				break
-
-			self.lostconnection.emit()
-			time.sleep (10)
-			continue
+		return
 
 	@QtCore.Slot (dict)
 	def newmerged (self, params):
@@ -336,30 +195,6 @@ class CartoonServer (SecureSession):
 		self.flushtimer.timeout.connect (self.FlushSession)
 		self.flushtimer.start (300000)
 
-	def GetSalt (self, username):
-
-		try:
-			username = self.jdec (username)
-		except:
-			return self.jenc (None)
-
-		sess = self.SQLSession()
-		with sess.begin():
-
-			q = sess.query (User).filter_by (Username = username)
-			if not q.count() == 1:
-				return self.jenc (None)
-
-			record = q.first()
-			password = record.Password
-
-			if len (password) <= 10:
-				salt = ''
-			else:
-				salt = password[:10]
-
-			return self.jenc (salt)
-
 	def CheckLogin (self, username, hello):
 
 		try:
@@ -369,8 +204,7 @@ class CartoonServer (SecureSession):
 			return self.jenc (None)
 
 		self._username = username
-		newtoken = self._login_checkin (hello)
-		if not newtoken:
+		if not self._login_checkin (hello):
 			return self.jenc (None)
 
 		sess = self.SQLSession()
@@ -393,7 +227,6 @@ class CartoonServer (SecureSession):
 
 			params.update ({'NumEdited': edited, 'NumTransferred': transferred})
 
-			record.Password = newtoken
 			record.LastLogin = datetime.now()
 
 		return self.jenc (self._login_checkout ({'ret': True, 'Parameters': params}))

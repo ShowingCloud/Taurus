@@ -1,0 +1,3 @@
+target = et99
+sources = sipet99cmodule.c
+headers = sipAPIet99.h

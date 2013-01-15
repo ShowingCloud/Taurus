@@ -43,14 +43,11 @@ class Player (QtCore.QObject):
 		self.dur_str = "00:00.000"
 
 		self.hasmediafile = False
-		self.stopped = True
-		self.playing = False
+		self.state = gst.STATE_NULL
 		self.loop = False
 		self.startpos = 0
 		self.stoppos = 0
-
 		self.player = None
-		self.stillcounter = 0
 
 		self.playurisignal.connect (self.playuri)
 		self.setloopsignal.connect (self.setloop)
@@ -81,7 +78,10 @@ class Player (QtCore.QObject):
 		self.bus = self.player.get_bus()
 		self.bus.enable_sync_message_emission()
 		self.bus.add_signal_watch()
-		self.bus.connect ("message", self.on_message)
+		self.bus.connect ("message::eos", self.on_message)
+		self.bus.connect ("message::error", self.on_message)
+		self.bus.connect ("message::state-changed", self.on_message)
+		self.bus.connect ("message::segment-done", self.on_message)
 		self.bus.connect ("sync-message::element", self.on_sync_message)
 
 		self.updatelabelduration.emit ("00:00.000 / 00:00.000")
@@ -97,24 +97,16 @@ class Player (QtCore.QObject):
 	@QtCore.Slot (unicode)
 	def playuri (self, filepath):
 
-		if self.hasmediafile:
-			self.player.set_state (gst.STATE_PAUSED)
-			self.playing = False
-			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-
 		self.startpos = 0
 		self.stoppos = 0
 		self.position = 0
 		self.loop = False
 
 		self.player.set_state (gst.STATE_NULL)
-		self.player.set_property ("uri", "file:///" + filepath)
+		self.player.set_property ("uri", "file:///%s" % filepath)
 		self.hasmediafile = True
-
 		self.player.set_state (gst.STATE_PLAYING)
-		self.stopped = False
-		self.playing = True
-		self.setbuttonpause.emit()
+
 		self.updatelabelduration.emit ("00:00.000 / 00:00.000")
 		self.updatesliderseek.emit (self.seekmin)
 
@@ -136,44 +128,23 @@ class Player (QtCore.QObject):
 		self.seek (self.startpos, self.stoppos)
 
 		if endtime == 0:
+			self.player.set_state (gst.STATE_PAUSED)
 			self.dur_str = time2str (self.stoppos - self.startpos)
 			self.loop = False
 		else:
+			self.player.set_state (gst.STATE_PLAYING)
 			self.dur_str = time2str (self.stoppos - self.startpos)
 			self.loop = True
-
-		if endtime == 0:
-			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-			self.player.set_state (gst.STATE_PAUSED)
-			self.playing = False
-			self.setbuttonplay.emit()
-		else:
-			self.player.set_state (gst.STATE_PLAYING)
-			self.playing = True
-			self.setbuttonpause.emit()
 
 	@QtCore.Slot (str)
 	def seekstarttime (self, start):
 		starttime = str2time (start)
 
 		if self.hasmediafile and starttime <= self.duration:
-			self.player.set_state (gst.STATE_PAUSED)
-			self.playing = False
 			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, starttime)
-			self.setbuttonplay.emit()
+			self.player.set_state (gst.STATE_PAUSED)
 
 	def updatethread (self):
-		if not self.player.get_state (0)[1] == gst.STATE_PLAYING: # ugly codes to make sure one of the media files works
-			if self.playing:
-				self.stillcounter += 1
-				if self.stillcounter > 10 and not self.player.get_state (0)[1] == gst.STATE_PLAYING:
-					print "force start"
-					self.position += 100000000
-					self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.position)
-					self.player.set_state (gst.STATE_PLAYING)
-					self.setbuttonpause.emit()
-			else:
-				self.stillcounter = 0
 
 		if self.stoppos == 0:
 			try:
@@ -181,20 +152,19 @@ class Player (QtCore.QObject):
 				if self.duration == -1:
 					return
 				self.stoppos = self.duration
-				self.seek (self.startpos, self.stoppos)
 				self.dur_str = time2str (self.stoppos - self.startpos)
-				self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+				self.updatelabelduration.emit ("00:00.000 / %s" % self.dur_str)
 			except:
 				pass
 
 		try:
 			self.position = self.player.query_position (gst.FORMAT_TIME, None)[0]
 			self.pos_str = time2str (self.position - self.startpos)
-			self.updatelabelduration.emit (self.pos_str + " / " + self.dur_str)
+			self.updatelabelduration.emit ("%s / %s" % (self.pos_str, self.dur_str))
 			if self.stoppos != self.startpos:
-				self.updatesliderseek.emit (float (self.position - self.startpos) / (self.stoppos - self.startpos)
-						* (self.seekmax - self.seekmin) + self.seekmin)
-			if self.player.get_state (0)[1] == gst.STATE_PLAYING:
+				self.updatesliderseek.emit ((self.position - self.startpos) * 100 / (self.stoppos - self.startpos))
+#						/ 100 * (self.seekmax - self.seekmin) + self.seekmin)
+			if self.state == gst.STATE_PLAYING:
 				self.updatelineedit.emit (self.pos_str)
 		except:
 			pass
@@ -208,28 +178,19 @@ class Player (QtCore.QObject):
 		if not self.hasmediafile:
 			return
 
-		if self.player.get_state (0)[1] == gst.STATE_PLAYING:
+		if self.state == gst.STATE_PLAYING:
 			self.player.set_state (gst.STATE_PAUSED)
-			self.playing = False
-			self.setbuttonplay.emit()
 		else:
 			self.player.set_state (gst.STATE_PLAYING)
-			self.playing = True
-			self.setbuttonpause.emit()
 
 	@QtCore.Slot()
 	def stopclicked (self):
-		self.stopped = True
+		self.player.set_state (gst.STATE_READY)
 
 		if self.hasmediafile:
 			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
 
-		self.player.set_state (gst.STATE_READY)
-		self.playing = False
-
-		self.setbuttonplay.emit()
-
-		self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+		self.updatelabelduration.emit ("00:00.000 / %s" % self.dur_str)
 		self.updatesliderseek.emit (self.seekmin)
 
 	@QtCore.Slot()
@@ -237,13 +198,8 @@ class Player (QtCore.QObject):
 		if not self.hasmediafile:
 			return
 
-		self.stopped = False
-
 		self.player.set_state (gst.STATE_PAUSED)
-		self.playing = False
-		self.setbuttonplay.emit()
-		self.position -= 100000000
-
+		self.position -= 0.1 * gst.SECOND
 		if self.position < 0:
 			self.position = 0
 
@@ -254,13 +210,8 @@ class Player (QtCore.QObject):
 		if not self.hasmediafile:
 			return
 
-		self.stopped = False
-
 		self.player.set_state (gst.STATE_PAUSED)
-		self.playing = False
-		self.setbuttonplay.emit()
-		self.position += 100000000
-
+		self.position += 0.1 * gst.SECOND
 		if self.position > self.stoppos:
 			self.position = self.stoppos
 
@@ -280,10 +231,9 @@ class Player (QtCore.QObject):
 	@QtCore.Slot (int)
 	def sliderseekvalue (self, slider):
 		if self.hasmediafile:
-			self.playing = False
 			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH,
-					(float (slider - self.seekmin) / (self.seekmax - self.seekmin)
-						* (self.stoppos - self.startpos) + self.startpos))
+#					(float (slider - self.seekmin) / (self.seekmax - self.seekmin)
+					(slider * (self.stoppos - self.startpos) / 100 + self.startpos))
 
 	@QtCore.Slot (int)
 	def slidervolumevalue (self, slider):
@@ -294,34 +244,36 @@ class Player (QtCore.QObject):
 		self.player.set_state (gst.STATE_NULL)
 
 	def on_message (self, bus, message):
+
 		if message.type == gst.MESSAGE_EOS:
-			self.stopped = True
 			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
 			self.player.set_state (gst.STATE_READY)
-			self.playing = False
-			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+			self.updatelabelduration.emit ("00:00.000 / %s" % self.dur_str)
 			self.updatesliderseek.emit (self.seekmin)
-			self.setbuttonplay.emit()
+
 		elif message.type == gst.MESSAGE_ERROR:
-			self.stopped = True
 			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
 			self.player.set_state (gst.STATE_READY)
-			self.playing = False
-			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+			self.updatelabelduration.emit ("00:00.000 / %s" % self.dur_str)
 			self.updatesliderseek.emit (self.seekmin)
 			err, debug = message.parse_error()
 			print 'Error: %s' % err, debug
-			self.setbuttonplay.emit()
+
 		elif message.type == gst.MESSAGE_STATE_CHANGED:
 			if not message.src == self.player:
 				return
 			old, new, pending = message.parse_state_changed()
-			if old == gst.STATE_READY and new == gst.STATE_PAUSED:
+			if self.loop and old == gst.STATE_READY and new == gst.STATE_PAUSED:
 				self.seek (self.startpos, self.stoppos)
+
+			self.state = new
 			if new == gst.STATE_PLAYING:
 				self.updatethreadtimer.setInterval (30)
+				self.setbuttonpause.emit()
 			else:
 				self.updatethreadtimer.setInterval (200)
+				self.setbuttonplay.emit()
+
 		elif message.type == gst.MESSAGE_SEGMENT_DONE:
 			src = self.player.get_property ("source")
 			pad = src.get_pad ('src')
@@ -335,13 +287,4 @@ class Player (QtCore.QObject):
 			imagesink = message.src
 			imagesink.set_property ("force-aspect-ratio", True)
 			imagesink.set_xwindow_id (self.windowId)
-
-	def cb_pad_added (self, element, pad, islast):
-		caps = pad.get_caps()
-		name = caps[0].get_name()
-		if 'audio' in name:
-			if not self.__apad.is_linked():
-				pad.link (self.__apad)
-		elif 'video' in name:
-			if not self.__vpad.is_linked():
-				pad.link (self.__vpad)
+			imagesink.expose()

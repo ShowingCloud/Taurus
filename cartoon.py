@@ -1,13 +1,16 @@
 #!/usr/bin/python
 
+import sip
+from SIP import et99
+
 import sys, os
 from PySide import QtCore, QtGui
 
-from Frontend import MainWindow, Login, LoginList, PasswordError
+from Frontend import MainWindow, Login, LoginList, PasswordError, CommonError
 import Translations
 
 
-if __name__ == "__main__":
+def Cartoon():
 
 	app = QtGui.QApplication (sys.argv)
 	app.setWindowIcon (QtGui.QIcon (':/images/icon.ico'))
@@ -31,7 +34,7 @@ if __name__ == "__main__":
 		if not l.exec_() == QtGui.QDialog.Accepted:
 			QtGui.qApp.quit()
 
-		ll = LoginList (l.username, l.password)
+		ll = LoginList (l.username, l.password, et99.et_init())
 		ll.move (l.pos() + l.rect().center() - ll.rect().center())
 		ret = ll.exec_()
 
@@ -41,7 +44,10 @@ if __name__ == "__main__":
 			l.show()
 			l.ui.lineeditcpid.setFocus()
 
-			pe = PasswordError()
+			if ret == QtGui.QDialog.Rejected:
+				pe = PasswordError()
+			else:
+				pe = CommonError (QtGui.qApp.tr ("Connection failed. Please try again later."))
 			pe.move (l.pos() + l.rect().center() - pe.rect().center())
 			pe.exec_()
 			islogin = False
@@ -51,3 +57,7 @@ if __name__ == "__main__":
 	w.show()
 
 	sys.exit (app.exec_())
+
+
+if __name__ == "__main__":
+	Cartoon()

@@ -3,7 +3,8 @@
 import sys
 from PySide import QtCore, QtGui
 
-import SimpleXMLRPCServer
+from SocketServer import ThreadingMixIn
+from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 from UI import images_rc
 from Toolkit import CartoonServer
@@ -28,6 +29,10 @@ class ServerTray (QtCore.QObject):
 		self.trayicon.show()
 
 
+class ThreadedXMLRPCServer (ThreadingMixIn, SimpleXMLRPCServer):
+	pass
+
+
 class RPCServerHandler (QtCore.QObject):
 
 	finished = QtCore.Signal()
@@ -35,8 +40,7 @@ class RPCServerHandler (QtCore.QObject):
 	def __init__ (self, parent = None):
 		QtCore.QObject.__init__ (self, parent)
 
-		self.server = SimpleXMLRPCServer.SimpleXMLRPCServer (("", 10207),
-				requestHandler = SimpleXMLRPCServer.SimpleXMLRPCRequestHandler)
+		self.server = ThreadedXMLRPCServer (("", 10207), requestHandler = SimpleXMLRPCRequestHandler)
 		self.server.register_introspection_functions()
 		self.server.register_instance (CartoonServer())
 

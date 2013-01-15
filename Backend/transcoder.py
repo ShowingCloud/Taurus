@@ -25,11 +25,11 @@ class Transcoder (QtCore.QObject):
 
 		srcfileinfo = QtCore.QFileInfo (srcfile)
 		self.srcpath = QtCore.QDir.toNativeSeparators (srcfileinfo.absolutePath())
-		dstfile = os.path.join (path, srcfileinfo.baseName() + ".mp4")
+		dstfile = os.path.join (path, "%s.mp4" % srcfileinfo.baseName())
 		i = 0
 		while os.path.exists (dstfile):
 			i += 1
-			dstfile = os.path.join (path, srcfileinfo.baseName() + "-%02d.mp4" % i)
+			dstfile = os.path.join (path, "%s-%02d.mp4" % (srcfileinfo.baseName(), i))
 		os.close (os.open (dstfile, os.O_CREAT))
 		dstfileinfo = QtCore.QFileInfo (dstfile)
 		self.dstfile = QtCore.QDir.toNativeSeparators (dstfileinfo.absoluteFilePath())
@@ -94,7 +94,7 @@ class Transcoder (QtCore.QObject):
 			self.finished.emit()
 		elif message.type == gst.MESSAGE_ELEMENT:
 			if message.structure.get_name() == "progress":
-				self.updatemodel.emit (self.row, (message.structure ['percent'], None))
+				self.updatemodel.emit (self.row, (dict (message.structure).get ('percent'), None))
 
 	@QtCore.Slot()
 	def play (self):

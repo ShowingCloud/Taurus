@@ -30,7 +30,7 @@ class SplitProg (QtGui.QDialog):
 
 	@QtCore.Slot()
 	def on_pushButton_clicked (self):
-		self.hide()
+		self.reject()
 
 	def resizeEvent (self, event):
 		pixmap = QtGui.QPixmap (self.size())

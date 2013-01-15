@@ -4,8 +4,7 @@ import re
 
 
 def time2str (t):
-	ms, ns = divmod (t, 1000000)
-	s, ms = divmod (ms, 1000)
+	s, ms = divmod (t // 1000000, 1000)
 	m, s = divmod (s, 60)
 
 	if m < 60:

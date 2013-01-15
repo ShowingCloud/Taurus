@@ -28,7 +28,7 @@ class NewConvert (QtGui.QDialog):
 		if lasttransfersrcpath and os.path.isdir (lasttransfersrcpath):
 			self.transfersrcpath = lasttransfersrcpath
 
-		self.files = []
+		self.files = list()
 
 		self.ui.treeView.setModel (self.newconvertmodel (self))
 		self.ui.treeView.setRootIsDecorated (False)
@@ -90,7 +90,7 @@ class NewConvert (QtGui.QDialog):
 		for i in xrange (model.rowCount()):
 			f = model.data (model.index (i, 0))
 			if os.path.isfile (f):
-				self.files.append (model.data (model.index (i, 0)))
+				self.files.append (f)
 
 		self.accept()
 

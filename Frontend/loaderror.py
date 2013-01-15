@@ -20,7 +20,7 @@ class LoadError (QtGui.QDialog):
 	@QtCore.Slot()
 	def on_buttonload_clicked (self):
 		self.ui.buttonload.hide()
-		self.ui.labeltxt.setGeometry (QtCore.QRect (0, 10, 400, 120))
+		self.ui.labeltxt.setGeometry (QtCore.QRect (10, 10, 400, 120))
 		self.ui.labeltxt.setText (self.tr ("Video Source Requirements:\nEncapsulation: MPG, AVI, WMV, VOB\nResolution: Not Lower Than VGA (640 x 480) or D1 (720 x 576)\nBitrate: Not Less Than 4Mbps (for Video) and 128Kbps (for Audio)\nFramerate: Not Less Than 25 Frames/second"))
 
 	@QtCore.Slot()
