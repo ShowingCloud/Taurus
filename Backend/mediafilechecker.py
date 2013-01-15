@@ -18,6 +18,8 @@ class MediaFileChecker (QtCore.QObject):
 
 		self.demuxer = None
 		self.muxer = None
+		self.vencoder = None
+		self.aencoder = None
 		self.status = 0
 		self.length = -1
 
@@ -60,48 +62,47 @@ class MediaFileChecker (QtCore.QObject):
 		gst.element_link_many (source, typefind, fakesink)
 
 		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.connect ('message', self.on_message)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
 
+	def on_message (self, bus, message):
+
+		if message.type == gst.MESSAGE_EOS:
+			self.pipeline.set_state (gst.STATE_NULL)
+
+			if self.status == 0:
+				self.status = 1
+			elif self.status == 2:
+				self.status = 3
+			elif self.status == 4:
+				self.status = 5
+
+		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state (gst.STATE_NULL)
+
+			if self.status == 0:
+				self.status = 1
+			elif self.status == 2:
+				self.status = 3
+			elif self.status == 4:
+				self.status = 5
+
+		elif message.type == gst.MESSAGE_TAG:
+			taglist = message.parse_tag()
+
+			if "bitrate" in taglist.keys():
+				if "video-codec" in taglist.keys():
+					self.vbitrate = taglist["bitrate"]
+				elif "audio-codec" in taglist.keys():
+					self.abitrate = taglist["bitrate"]
+				elif "video" in message.src.get_name():
+					self.vbitrate = taglist["bitrate"]
+				elif "audio" in message.src.get_name():
+					self.abitrate = taglist["bitrate"]
+
 	def on_timeout (self):
-
-		while True:
-			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_TAG, 0)
-			if not message:
-				break
-
-			if message.type == gst.MESSAGE_EOS:
-				self.pipeline.set_state (gst.STATE_NULL)
-
-				if self.status == 0:
-					self.status =1
-				elif self.status == 2:
-					self.status = 3
-				elif self.status == 4:
-					self.status = 5
-
-			elif message.type == gst.MESSAGE_ERROR:
-				self.pipeline.set_state (gst.STATE_NULL)
-
-				if self.status == 0:
-					self.status =1
-				elif self.status == 2:
-					self.status = 3
-				elif self.status == 4:
-					self.status = 5
-
-			elif message.type == gst.MESSAGE_TAG:
-				taglist = message.parse_tag()
-
-				if "bitrate" in taglist.keys():
-					if "video-codec" in taglist.keys():
-						self.vbitrate = taglist["bitrate"]
-					elif "audio-codec" in taglist.keys():
-						self.abitrate = taglist["bitrate"]
-					elif "video" in message.src.get_name():
-						self.vbitrate = taglist["bitrate"]
-					elif "audio" in message.src.get_name():
-						self.abitrate = taglist["bitrate"]
 
 		if self.status == 1:
 			self.status = 2
@@ -127,10 +128,11 @@ class MediaFileChecker (QtCore.QObject):
 			self.discoveredsignal.emit (self.row, self.mediafileverification(), {"muxer": self.muxer, "videocodeccaps": self.vcodeccaps,
 				"length": self.length, "audiocodeccaps": self.acodeccaps, "videooutcaps": self.voutcaps, "audiooutcaps": self.aoutcaps,
 				"videowidth": self.vwidth, "videoheight": self.vheight, "videobitrate": self.vbitrate, "audiobitrate": self.abitrate,
-				"videoframerate": self.vframerate})
+				"videoframerate": self.vframerate, "videoencoder": self.vencoder, "audioencoder": self.aencoder})
 			self.finished.emit()
 
 	def mediafileverification (self):
+
 		if not self.muxer:
 			return False
 		if not self.vcodeccaps or not self.acodeccaps or not self.voutcaps or not self.aoutcaps:
@@ -148,8 +150,7 @@ class MediaFileChecker (QtCore.QObject):
 		if self.abitrate and self.abitrate < 128000:
 			return False
 
-		self.status = 1
-
+#		self.status = 1
 		return True
 
 	def got_encaps_type (self, element, probability, caps):
@@ -158,15 +159,23 @@ class MediaFileChecker (QtCore.QObject):
 		if name == "video/mpeg" or name == "video/x-mpeg":
 			self.demuxer = "mpegpsdemux"
 			self.muxer = "mpegpsmux"
+			self.vencoder = "ffenc_mpeg2video"
+			self.aencoder = "ffenc_mp2"
 		elif name == "video/x-msvideo":
 			self.demuxer = "avidemux"
 			self.muxer = "avimux"
+			self.vencoder = "x264enc"
+			self.aencoder = "lamemp3enc"
 		elif name == "video/x-ms-asf":
 			self.demuxer = "asfdemux"
 			self.muxer = "asfmux"
+			self.vencoder = "ffenc_wmv2"
+			self.aencoder = "ffenc_wmav2"
 		elif name == "video/quicktime":
 			self.demuxer = "qtdemux"
 			self.muxer = "qtmux"
+			self.vencoder = "x264enc"
+			self.aencoder = "faac"
 		else:
 			return
 
@@ -195,6 +204,8 @@ class MediaFileChecker (QtCore.QObject):
 		gst.element_link_many (queuea, typefinda, fakesinka)
 
 		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.connect ('message', self.on_message)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
 
@@ -241,6 +252,8 @@ class MediaFileChecker (QtCore.QObject):
 		gst.element_link_many (queuea, typefinda, fakesinka)
 
 		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.connect ('message', self.on_message)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
 

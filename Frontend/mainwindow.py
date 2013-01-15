@@ -3,13 +3,13 @@
 import sys, os, time
 from PySide import QtCore, QtGui
 from ctypes import pythonapi, c_void_p, py_object
+
 import gobject
-gobject.threads_init()
 
 from UI import Ui_MainWindow
 from Frontend import MergeExam, NewConvert, SaveSplit, LoadError
 from Backend import Player, VideoSplitter, VideoMerger, MediaFileChecker, Transcoder
-from Toolkit import TransferDelegate, MergeDelegate, time2str, str2time, time2lstr
+from Toolkit import TransferDelegate, MergeDelegate, time2str, str2time
 
 
 TransTaskProcessing, TransTaskFinished, TransTaskDeleted, TransTaskVerifying = xrange (4)
@@ -43,6 +43,7 @@ class MainWindow (QtGui.QMainWindow):
 		self.createplayer()
 		self.createmerger()
 		self.createUIdetails()
+		self.creategobject()
 
 		self.transcoding = []
 		self.translisting = TransTaskProcessing
@@ -107,6 +108,20 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.buttoncancelbrowse.hide()
 
 		self.ui.labelfilmtitle.setAlignment (QtCore.Qt.AlignHCenter)
+
+	def creategobject (self):
+		gobject.threads_init()
+		self.mainloop = gobject.MainLoop()
+		self.context = self.mainloop.get_context()
+
+		self.contexttimer = QtCore.QTimer (QtGui.QApplication.instance())
+		self.contexttimer.timeout.connect (self.contexthandler)
+		self.contexttimer.start (1)
+
+	def contexthandler (self):
+		while self.context.pending():
+			QtGui.qApp.processEvents()
+			self.context.iteration()
 
 	@QtCore.Slot (QtCore.QPoint)
 	def on_transview_customContextMenuRequested (self, point):
@@ -345,7 +360,7 @@ class MainWindow (QtGui.QMainWindow):
 		row = self.ui.mergeview.currentIndex().row()
 		model = self.ui.mergeview.model()
 
-		if row == 0:
+		if row <= 1:
 			return
 		
 		model.insertRow (row - 1, model.takeRow (row))
@@ -404,16 +419,30 @@ class MainWindow (QtGui.QMainWindow):
 		exam.move (self.pos() + self.rect().center() - exam.rect().center())
 		exam.exec_()
 
-	@QtCore.Slot (int, tuple)
+	@QtCore.Slot (int, int)
 	def updatemergemodel (self, row, value):
 		model = self.ui.mergeview.model()
 		rownum = model.rowCount()
 
 		if row >= rownum:
+			for i in xrange (rownum):
+				model.setData (model.index (i, 3), (100, self.tr ("Finished")))
 			return
 
 		if value is not None:
-			model.setData (model.index (row, 3), value)
+			print "%d %d" % (value, model.data (model.index (row, 3))[0])
+			if model.data (model.index (row, 3))[0] < value:
+				if value < 100:
+					model.setData (model.index (row, 3), (value, self.tr ("Processing...")))
+				else:
+					model.setData (model.index (row, 3), (100, self.tr ("Finished")))
+
+			for i in xrange (row):
+				model.setData (model.index (i, 3), (100, self.tr ("Finished")))
+
+	@QtCore.Slot (unicode)
+	def on_lineeditleadertitle_textChanged (self, text):
+		self.ui.checkboxleadertitle.setChecked (True)
 
 	@QtCore.Slot()
 	def on_buttonsave_clicked (self):
@@ -462,7 +491,7 @@ class MainWindow (QtGui.QMainWindow):
 		checker.finished.connect (checker.deleteLater)
 		checker.startworker()
 		self.checkers.append ({"worker": checker, "operation": "Split",
-			"params": [(self.playerfile, dstfile.absoluteFilePath(), time2lstr (starttime), time2lstr (duration), title, ss.totranscode, self),
+			"params": [(self.playerfile, dstfile.absoluteFilePath(), starttime, duration, title, ss.totranscode, self),
 				(self.username, time, dstfile.absolutePath(), dstfile.fileName())]})
 
 	@QtCore.Slot (int, tuple)
@@ -474,7 +503,8 @@ class MainWindow (QtGui.QMainWindow):
 			return
 
 		if value[0] is not None:
-			model.setData (model.index (row, 1), value[0])
+			if model.data (model.index (row, 1)) < value[0]:
+				model.setData (model.index (row, 1), value[0])
 
 			if value[0] >= 100:
 				self.transcoding [row] ["status"] = TransTaskFinished
@@ -639,7 +669,7 @@ class MainWindow (QtGui.QMainWindow):
 				model.setData (model.index (mergerow, 1), "%s" % (time2str (params["length"])))
 				model.setData (model.index (mergerow, 2), "%d X %d" % (params["videowidth"], params["videoheight"]))
 
-			self.merger.appendtasksignal.emit (*checker["params"])
+			self.merger.appendtasksignal.emit (params, *checker["params"])
 
 		elif checker["operation"] == "Split":
 
@@ -650,7 +680,7 @@ class MainWindow (QtGui.QMainWindow):
 					pass
 				return
 
-			self.splitter = VideoSplitter (*checker["params"][0])
+			self.splitter = VideoSplitter (params, *checker["params"][0])
 			self.splitter.finished.connect (self.splitter.deleteLater)
 			self.splitter.addtranscode.connect (self.addtranscode)
 			self.splitter.startworker (*checker["params"][1])

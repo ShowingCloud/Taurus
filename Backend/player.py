@@ -57,6 +57,7 @@ class Player (QtCore.QObject):
 		self.bus = self.player.get_bus()
 		self.bus.enable_sync_message_emission()
 		self.bus.add_signal_watch()
+		self.bus.connect ("message", self.on_message)
 		self.bus.connect ("sync-message::element", self.on_sync_message)
 
 		self.updatelabelduration.emit ("00:00.000 / 00:00.000")
@@ -84,7 +85,6 @@ class Player (QtCore.QObject):
 		self.player.set_property ("uri", "file:///" + filepath)
 		self.hasmediafile = True
 
-		self.updatethreadtimer.setInterval (1)
 		self.player.set_state (gst.STATE_PLAYING)
 		self.stopped = False
 		self.setbuttonpause.emit()
@@ -177,8 +177,6 @@ class Player (QtCore.QObject):
 				pad = src.get_pad ('src')
 				pad.push_event (gst.event_new_eos())
 
-		return True
-
 	def seek (self, start, stop):
 		flags = gst.SEEK_FLAG_SEGMENT | gst.SEEK_FLAG_ACCURATE | gst.SEEK_FLAG_FLUSH
 		self.player.seek (1.0, gst.FORMAT_TIME, flags, gst.SEEK_TYPE_SET, start, gst.SEEK_TYPE_SET, stop)
@@ -241,12 +239,13 @@ class Player (QtCore.QObject):
 
 	@QtCore.Slot()
 	def muteornot (self):
-		if self.player.get_property ("volume") == 0:
-			self.player.set_property ("volume", 1)
-			self.updateslidervolume.emit (self.volmax)
-		else:
-			self.player.set_property ("volume", 0)
+		print "got signal"
+		if self.player.get_property ("mute") == False:
+			self.player.set_property ("mute", True)
 			self.updateslidervolume.emit (self.volmin)
+		else:
+			self.player.set_property ("mute", False)
+			self.updateslidervolume.emit (self.player.get_property ("volume") * (self.volmax - self.volmin) + self.volmin)
 
 	@QtCore.Slot (int)
 	def sliderseekvalue (self, slider):
@@ -262,6 +261,32 @@ class Player (QtCore.QObject):
 	@QtCore.Slot()
 	def quitworker (self):
 		self.player.set_state (gst.STATE_NULL)
+
+	def on_message (self, bus, message):
+		if message.type == gst.MESSAGE_EOS:
+			self.stopped = True
+			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
+			self.player.set_state (gst.STATE_NULL)
+			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+			self.updatesliderseek.emit (self.seekmin)
+			self.setbuttonplay.emit()
+		elif message.type == gst.MESSAGE_ERROR:
+			self.stopped = True
+			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
+			self.player.set_state (gst.STATE_NULL)
+			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+			self.updatesliderseek.emit (self.seekmin)
+			err, debug = message.parse_error()
+			print 'Error: %s' % err, debug
+			self.setbuttonplay.emit()
+		elif message.type == gst.MESSAGE_STATE_CHANGED:
+			old, new, pending = message.parse_state_changed()
+			if old == gst.STATE_READY and new == gst.STATE_PAUSED and message.src == self.player:
+				self.seek (self.startpos, self.stoppos)
+		elif message.type == gst.MESSAGE_SEGMENT_DONE:
+			src = self.player.get_property ("source")
+			pad = src.get_pad ('src')
+			pad.push_event (gst.event_new_eos())
 
 	def on_sync_message (self, bus, message):
 		if message.structure is None:

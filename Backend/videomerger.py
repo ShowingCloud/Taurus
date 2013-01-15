@@ -1,20 +1,19 @@
 #!/usr/bin/python
 
-import os, time, sys
+import os, time, sys, re
 import gst
 from PySide import QtCore, QtGui
 
 from Toolkit import RPCHandler
 
-
 class VideoMerger (QtCore.QObject):
 
 	startsignal = QtCore.Signal (unicode, unicode)
 	cancelsignal = QtCore.Signal()
-	appendtasksignal = QtCore.Signal (unicode, int)
+	appendtasksignal = QtCore.Signal (dict, unicode, int)
 	switchrowsignal = QtCore.Signal (int, int)
 	removerowsignal = QtCore.Signal (int)
-	updatemodel = QtCore.Signal (int, tuple)
+	updatemodel = QtCore.Signal (int, int)
 	startnewmerge = QtCore.Signal (unicode, unicode)
 
 	def __init__ (self, username, parent = None):
@@ -25,14 +24,12 @@ class VideoMerger (QtCore.QObject):
 		self.parent = parent
 		self.path = None
 		self.srcfiles = []
-		self.status = (0, 0, 0, False)
-		self.proc = None
 
 		self.bus = None
 
 	@QtCore.Slot (unicode, int)
-	def appendtask (self, srcfile, row):
-		self.srcfiles.append ({'srcfile': srcfile, 'row': row})
+	def appendtask (self, params, srcfile, row):
+		self.srcfiles.append (dict ([('srcfile', srcfile), ('row', row)] + params.items()))
 		self.items = len (self.srcfiles)
 
 	@QtCore.Slot (int, int)
@@ -57,16 +54,10 @@ class VideoMerger (QtCore.QObject):
 
 			return
 
-		self.contexttimer = QtCore.QTimer()
-		self.contexttimer.timeout.connect (self.contexthandler)
-		self.contexttimer.start (100)
-
 		self.dstfile = dstfile
 		self.path = path
 
-		self.status = (1, 0, 0, True)
-		self.proc = None
-
+		self.dowork()
 		self.sendnewmerged (self.username, self.path)
 
 	def sendnewmerged (self, username, path):
@@ -85,205 +76,190 @@ class VideoMerger (QtCore.QObject):
 	@QtCore.Slot()
 	def quitworker (self):
 		self.pipeline.set_state (gst.STATE_NULL)
-		self.contexttimer.stop()
 
-	def doworks (self):
+	def dowork (self):
 
-		if self.status[0] == 0 or self.status[0] > 9:
-			return
+		self.pipeline = gst.Pipeline()
+		vcomp = gst.element_factory_make ('gnlcomposition')
+		acomp = gst.element_factory_make ('gnlcomposition')
+		vconv = gst.element_factory_make ('ffmpegcolorspace')
+		vcomp.connect ("pad-added", self.comp_pad, vconv)
+		aconv = gst.element_factory_make ('audioconvert')
+		acomp.connect ("pad-added", self.comp_pad, aconv)
+		vident = gst.element_factory_make ('identity')
+		vident.set_property ('single-segment', True)
+		aident = gst.element_factory_make ('identity')
+		aident.set_property ('single-segment', True)
 
-		if self.status[0] == 1:
-			self.status = (2, 0, self.items, True)
-			return
+		vencode = gst.element_factory_make (self.srcfiles[0]['videoencoder'])
+		if self.srcfiles[0]['videobitrate']:
+			try:
+				vencode.set_property ('bitrate', round (float (self.srcfiles[0]['videobitrate']) / 1000) * 1000)
+			except:
+				vencode.set_property ('bitrate', 1024000)
+		else:
+			vencode.set_property ('bitrate', 1024000)
 
-		if self.status[0] == 2:
-			if not self.status[3]:
-				return
+		aencode = gst.element_factory_make (self.srcfiles[0]['audioencoder'])
+		if self.srcfiles[0]['audiobitrate']:
+			try:
+				aencode.set_property ('bitrate', round (float (self.srcfiles[0]['audiobitrate']) / 1000) * 1000)
+			except:
+				aencode.set_property ('bitrate', 128000)
+		else:
+			aencode.set_property ('bitrate', 128000)
 
-			i = self.status[1]
-			if i < self.status[2]:
+		mux = gst.element_factory_make (self.srcfiles[0]['muxer'])
+		sink = gst.element_factory_make ('filesink')
+		sink.set_property ('location', self.dstfile)
 
-				self.updatemodel.emit (self.srcfiles[i - 1]['row'], (20, self.tr ("Preprocessed")))
+		timestamp = 0
 
-				self.status = (self.status[0], self.status[1] + 1, self.status[2], False)
+		for i in xrange (self.items):
 
-				self.srcfiles[i]['origname'] = "\\tmp\\orig%d.mpg" % (self.srcfiles[i]['row'])
+			src = gst.Bin()
+			source = gst.element_factory_make ('filesrc')
+			source.set_property ('location', self.srcfiles[i]['srcfile'])
+			preport = gst.element_factory_make ('progressreport', 'report %d' % i)
+			preport.set_property ('silent', False)
+			preport.set_property ('update-freq', 1)
+			decode = gst.element_factory_make ('decodebin2')
+			vconvert = gst.element_factory_make ('ffmpegcolorspace')
+			fakesink = gst.element_factory_make ('fakesink')
+			decode.connect ('pad-added', self.decode_pad, vconvert, fakesink)
+			caps = gst.element_factory_make ('capsfilter')
+			caps.set_property ('caps', self.srcfiles[i]['videooutcaps'])
 
-				self.pipeline = gst.Pipeline ("pipeline")
-				source = gst.element_factory_make ("filesrc")
-				source.set_property ("location", self.srcfiles[i]['srcfile'])
-				sink = gst.element_factory_make ("filesink")
-				sink.set_property ("location", self.srcfiles[i]['origname'])
-				progress = gst.element_factory_make ("progressreport")
-				progress.set_property ('update-freq', 1)
+			src.add_many (source, preport, decode, vconvert, caps, fakesink)
+			gst.element_link_many (source, preport, decode)
+			gst.element_link_many (vconvert, caps)
+			src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
-				self.pipeline.add (source, progress, sink)
-				gst.element_link_many (source, progress, sink)
+			vsrc = gst.element_factory_make ('gnlsource')
+			vsrc.set_property ('start', timestamp)
+			vsrc.set_property ('duration', self.srcfiles[i]['length'])
+			vsrc.set_property ('media-start', 0)
+			vsrc.set_property ('media-duration', self.srcfiles[i]['length'])
+			vsrc.set_property ('priority', self.items - i)
+			vsrc.set_property ('caps', self.srcfiles[i]['videooutcaps'])
+			vsrc.add (src)
+			vcomp.add (vsrc)
 
-				self.bus = self.pipeline.get_bus()
+			src = gst.Bin()
+			source = gst.element_factory_make ('filesrc')
+			source.set_property ('location', self.srcfiles[i]['srcfile'])
+			decode = gst.element_factory_make ('decodebin2')
+			aconvert = gst.element_factory_make ('audioconvert')
+			fakesink = gst.element_factory_make ('fakesink')
+			decode.connect ('pad-added', self.decode_pad, aconvert, fakesink)
+			caps = gst.element_factory_make ('capsfilter')
+			caps.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
 
-				self.pipeline.set_state (gst.STATE_PLAYING)
-				return
+			src.add_many (source, decode, aconvert, caps, fakesink)
+			gst.element_link_many (source, decode)
+			gst.element_link_many (aconvert, caps)
+			src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
-			else:
-				self.status = (3, 0, self.items, True)
-				return
+			asrc = gst.element_factory_make ('gnlsource')
+			asrc.set_property ('start', timestamp)
+			asrc.set_property ('duration', self.srcfiles[i]['length'])
+			asrc.set_property ('media-start', 0)
+			asrc.set_property ('media-duration', self.srcfiles[i]['length'])
+			asrc.set_property ('priority', self.items - i)
+			asrc.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
+			asrc.add (src)
+			acomp.add (asrc)
 
-		if self.status[0] == 3:
+			timestamp += self.srcfiles[i]['length']
 
-			if self.status[3]:
-				self.status = (self.status[0], self.status[1], self.status[2], False)
+		src = gst.Bin()
+		source = gst.element_factory_make ('videotestsrc')
+		source.set_property ('pattern', 2)
+		preport = gst.element_factory_make ('progressreport', 'final')
+		preport.set_property ('silent', False)
+		preport.set_property ('update-freq', 1)
+		caps = gst.element_factory_make ('capsfilter')
+		caps.set_property ('caps', self.srcfiles[i]['videooutcaps'])
 
-			else:
+		src.add_many (source, preport, caps)
+		gst.element_link_many (source, preport, caps)
+		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
-				if self.proc is None or not self.proc.state() == QtCore.QProcess.NotRunning:
-					return
+		vsrc = gst.element_factory_make ('gnlsource')
+		vsrc.set_property ('start', timestamp)
+		vsrc.set_property ('duration', 1 * gst.SECOND)
+#		vsrc.set_property ('media-start', 0)
+		vsrc.set_property ('media-duration', 1 * gst.SECOND)
+		vsrc.set_property ('priority', self.items * 10)
+		vsrc.set_property ('caps', self.srcfiles[i]['videooutcaps'])
+		vsrc.add (src)
+		vcomp.add (vsrc)
 
-				print self.proc.readAllStandardOutput().data()
-				print self.proc.readAllStandardError().data()
-				self.proc = None
+		src = gst.Bin()
+		source = gst.element_factory_make ('audiotestsrc')
+		source.set_property ('wave', 4)
+		caps = gst.element_factory_make ('capsfilter')
+		caps.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
 
-			i = self.status[1]
-			if i < self.status[2]:
+		src.add_many (source, caps)
+		gst.element_link_many (source, caps)
+		src.add_pad (gst.GhostPad ('src', caps.get_pad ('src')))
 
-				self.updatemodel.emit (self.srcfiles[i]['row'], (40, self.tr ("Prerecoded")))
+		asrc = gst.element_factory_make ('gnlsource')
+		asrc.set_property ('start', timestamp)
+		asrc.set_property ('duration', 1 * gst.SECOND)
+#		asrc.set_property ('media-start', 0)
+		asrc.set_property ('media-duration', 1 * gst.SECOND)
+		asrc.set_property ('priority', self.items * 10)
+		asrc.set_property ('caps', self.srcfiles[i]['audiooutcaps'])
+		asrc.add (src)
+		acomp.add (asrc)
 
-				self.status = (self.status[0], self.status[1] + 1, self.status[2], False)
+		vcomp.set_property ('start', 0)
+		vcomp.set_property ('duration', timestamp)
+		vcomp.set_property ('media-duration', timestamp)
+		acomp.set_property ('start', 0)
+		acomp.set_property ('duration', timestamp)
+		acomp.set_property ('media-duration', timestamp)
 
-				self.srcfiles[i]['recodename'] = "tmp\\recode%d.mpg" % (self.srcfiles[i]['row'])
+		self.pipeline.add (vcomp, acomp, vconv, aconv, vident, aident, vencode, aencode, mux, sink)
+		gst.element_link_many (vconv, vident, vencode, mux)
+		gst.element_link_many (aconv, aident, aencode, mux)
+		gst.element_link_many (mux, sink)
 
-				command = ["ffmpeg.exe", "-y", "-i", self.srcfiles[i]['origname'], "-b:a", "128000",
-						"-b:v", "1024000", self.srcfiles[i]['recodename']]
-				self.proc = QtCore.QProcess (self)
-				self.proc.start (command.pop(0), command)
+		self.bus = self.pipeline.get_bus()
+		self.bus.add_signal_watch()
+		self.bus.connect ("message", self.on_message)
 
-				return
+		self.pipeline.set_state (gst.STATE_PLAYING)
 
-			else:
-				self.status = (4, 0, 0, True)
-				self.proc = None
-				return
+	def comp_pad (self, comp, pad, nextcomp):
+		nextpad = nextcomp.get_compatible_pad (pad, pad.get_caps())
+		if nextpad and not nextpad.is_linked():
+			pad.link (nextpad)
 
-		if self.status[0] == 4:
+	def decode_pad (self, comp, pad, nextcomp, fakesink):
+		nextpad = nextcomp.get_compatible_pad (pad, pad.get_caps())
+		if nextpad and not nextpad.is_linked():
+			pad.link (nextpad)
+		else:
+			nextpad = fakesink.get_pad ("sink")
+			pad.link (nextpad)
 
-			if sys.platform == 'win32':
-				command = ["cmd.exe", "/c"]
-			else:
-				command = []
-
-			command.extend (["copy", "/y"])
-
-			for i in xrange (self.items):
-
-				if not i == 0:
-					command.append ("+")
-
-				command.append ("%s%s" % (self.srcfiles[i]['recodename'], "/b"))
-
-			command.append ("tmp\\merged.mpg/b")
-
-			print command
-
-			self.proc = QtCore.QProcess (self)
-			self.proc.start (command.pop(0), command)
-
-			self.status = (5, 0, 0, True)
-			return
-
-		if self.status[0] == 5:
-			if self.proc is None or not self.proc.state() == QtCore.QProcess.NotRunning:
-				return
-
-			print self.proc.readAllStandardOutput().data()
-			print self.proc.readAllStandardError().data()
-			self.proc = None
-
-			for i in xrange (self.items):
-				self.updatemodel.emit (i, (60, self.tr ("Merged")))
-
-			self.status = (6, 0, 0, True)
-			return
-
-		if self.status[0] == 6:
-
-			command = ["ffmpeg.exe", "-y", "-i", "tmp\\merged.mpg", "-b:a", "128000", "-b:v", "1024000",
-				"tmp\\final.mpg"]
-			self.proc = QtCore.QProcess (self)
-			self.proc.start (command.pop(0), command)
-			self.status = (7, 0, 0, True)
-			return
-
-		if self.status[0] == 7:
-			if self.proc is None or not self.proc.state() == QtCore.QProcess.NotRunning:
-				return
-
-			print self.proc.readAllStandardOutput().data()
-			print self.proc.readAllStandardError().data()
-			self.proc = None
-
-			for i in xrange (self.items):
-				self.updatemodel.emit (i, (80, self.tr ("Recoded")))
-
-			self.status = (8, 0, 0, True)
-
-		if self.status[0] == 8:
-
-			self.pipeline = gst.Pipeline ("pipeline")
-			source = gst.element_factory_make ("filesrc")
-			source.set_property ("location", "tmp\\final.mpg")
-			sink = gst.element_factory_make ("filesink")
-			sink.set_property ("location", self.dstfile)
-			progress = gst.element_factory_make ("progressreport")
-			progress.set_property ('update-freq', 1)
-
-			self.pipeline.add (source, progress, sink)
-			gst.element_link_many (source, progress, sink)
-
-			self.bus = self.pipeline.get_bus()
-
-			self.pipeline.set_state (gst.STATE_PLAYING)
-			self.status = (9, 0, 0, False)
-
-		if self.status[0] == 9:
-			if not self.status[3]:
-				return
-
-			for i in xrange (self.items):
-				self.updatemodel.emit (i, (100, self.tr ("Finished")))
-
-			self.status = (10, 0, 0, True)
-
-			return
-
-	def cb_pad_added (self, element, pad, islast):
-		caps = pad.get_caps()
-		name = caps[0].get_name()
-		if 'audio' in name:
-			if not self.__apad.is_linked():
-				pad.link (self.__apad)
-		elif 'video' in name:
-			if not self.__vpad.is_linked():
-				pad.link (self.__vpad)
-
-
-	def contexthandler (self):
-
-		while True:
-			if not self.bus:
-				break
-
-			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_ELEMENT, 0)
-			if not message:
-				break
-
-			if message.type == gst.MESSAGE_EOS:
-				self.pipeline.set_state(gst.STATE_NULL)
-				self.status = (self.status[0], self.status[1], self.status[2], True)
-			elif message.type == gst.MESSAGE_ERROR:
-				self.pipeline.set_state(gst.STATE_NULL)
-				err, debug = message.parse_error()
-				print 'Error: %s' % err, debug
-			elif message.type == gst.MESSAGE_ELEMENT:
-				pass
-
-		self.doworks()
+	def on_message (self, bus, message):
+		if message.type == gst.MESSAGE_EOS:
+			self.pipeline.set_state (gst.STATE_NULL)
+			print "EOS"
+		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state (gst.STATE_NULL)
+			err, debug = message.parse_error()
+			print 'Error: %s' % err, debug
+		elif message.type == gst.MESSAGE_ELEMENT:
+			if message.structure.get_name() == "progress":
+				if 'final' in message.src.get_name():
+					self.pipeline.set_state (gst.STATE_NULL)
+					self.updatemodel.emit (100, 100)
+				elif 'report' in message.src.get_name():
+					num = re.findall (r'\d+', message.src.get_name())[0]
+					progress = message.structure ['percent']
+					self.updatemodel.emit (num, progress)

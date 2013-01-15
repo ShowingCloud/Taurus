@@ -35,16 +35,14 @@ class Transcoder (QtCore.QObject):
 		source = gst.element_factory_make ("filesrc")
 		source.set_property ("location", self.srcfile)
 		decoder = gst.element_factory_make ("decodebin2")
-		decoder.connect ("new-decoded-pad", self.cb_pad_added)
-		queuea = gst.element_factory_make ("queue")
-		queuev = gst.element_factory_make ("queue")
+		decoder.connect ("pad-added", self.cb_pad_added)
 		videoscale = gst.element_factory_make ("videoscale")
 		videorate = gst.element_factory_make ("videorate")
 		audioconv = gst.element_factory_make ("audioconvert")
-		colorspace = gst.element_factory_make ("ffmpegcolorspace")
-		colorspace2 = gst.element_factory_make ("ffmpegcolorspace")
 		caps = gst.element_factory_make ("capsfilter")
-		caps.set_property ('caps', gst.caps_from_string ("video/x-raw-rgb, width=640, height=480, framerate=25/1"))
+		caps.set_property ('caps', gst.caps_from_string ("\
+			video/x-raw-yuv, width=640, height=480, framerate=25/1;\
+			video/x-raw-rgb, width=640, height=480, framerate=25/1"))
 		audioenc = gst.element_factory_make ("faac")
 		audioenc.set_property ('bitrate', 128000)
 		videoenc = gst.element_factory_make ("x264enc")
@@ -56,21 +54,19 @@ class Transcoder (QtCore.QObject):
 		progress.set_property ('silent', True)
 		progress.set_property ('update-freq', 1)
 
-		self.__apad = queuea.get_pad ("sink")
-		self.__vpad = queuev.get_pad ("sink")
+		self.__apad = audioconv.get_pad ("sink")
+		self.__vpad = videoscale.get_pad ("sink")
 
-		self.pipeline.add (source, decoder, queuea, queuev, audioenc, videoenc, muxer, progress, sink,
-				colorspace, caps, videoscale, videorate, audioconv, colorspace2)
+		self.pipeline.add (source, decoder, audioenc, videoenc, muxer, progress, sink,
+				caps, videoscale, videorate, audioconv)
 		gst.element_link_many (source, decoder)
-		gst.element_link_many (queuev, videoscale, videorate, colorspace, caps, colorspace2, videoenc, muxer)
-		gst.element_link_many (queuea, audioconv, audioenc, muxer)
+		gst.element_link_many (videoscale, videorate, caps, videoenc, muxer)
+		gst.element_link_many (audioconv, audioenc, muxer)
 		gst.element_link_many (muxer, progress, sink)
 
 		self.bus = self.pipeline.get_bus()
-
-		self.contexttimer = QtCore.QTimer()
-		self.contexttimer.timeout.connect (self.on_timeout)
-		self.contexttimer.start (100)
+		self.bus.add_signal_watch()
+		self.bus.connect ("message", self.on_message)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
 		self.updatemodel.emit (self.row, (None, self.tr ("Transcoding...")))
@@ -90,25 +86,19 @@ class Transcoder (QtCore.QObject):
 		self.startnewtransfer.connect (self.parent.newtransferred)
 		self.startnewtransfer.emit (self.username, self.path)
 
-	def on_timeout (self):
-
-		while True:
-			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_ELEMENT, 0)
-			if not message:
-				break
-
-			if message.type == gst.MESSAGE_EOS:
-				self.pipeline.set_state(gst.STATE_NULL)
-				self.updatemodel.emit (self.row, (100, self.tr ("Finished")))
-				self.finished.emit()
-			elif message.type == gst.MESSAGE_ERROR:
-				self.pipeline.set_state(gst.STATE_NULL)
-				err, debug = message.parse_error()
-				print 'Error: %s' % err, debug
-				self.finished.emit()
-			elif message.type == gst.MESSAGE_ELEMENT:
-				if message.structure.get_name() == "progress":
-					self.updatemodel.emit (self.row, (message.structure ['percent'], None))
+	def on_message (self, bus, message):
+		if message.type == gst.MESSAGE_EOS:
+			self.pipeline.set_state(gst.STATE_NULL)
+			self.updatemodel.emit (self.row, (100, self.tr ("Finished")))
+			self.finished.emit()
+		elif message.type == gst.MESSAGE_ERROR:
+			self.pipeline.set_state(gst.STATE_NULL)
+			err, debug = message.parse_error()
+			print 'Error: %s' % err, debug
+			self.finished.emit()
+		elif message.type == gst.MESSAGE_ELEMENT:
+			if message.structure.get_name() == "progress":
+				self.updatemodel.emit (self.row, (message.structure ['percent'], None))
 
 	@QtCore.Slot()
 	def play (self):
@@ -125,7 +115,7 @@ class Transcoder (QtCore.QObject):
 		self.pipeline.set_state (gst.STATE_NULL)
 		self.finished.emit()
 
-	def cb_pad_added (self, element, pad, islast):
+	def cb_pad_added (self, element, pad):
 		caps = pad.get_caps()
 		name = caps[0].get_name()
 		if 'audio' in name:

@@ -13,10 +13,10 @@ class Ui_Login(object):
     def setupUi(self, Login):
         Login.setObjectName("Login")
         Login.resize(461, 263)
-        Login.setStyleSheet("background-color: rgb(102, 102, 102);")
+        Login.setStyleSheet("background-color: rgb(91, 91, 91);")
         self.labelcpid = QtGui.QLabel(Login)
         self.labelcpid.setGeometry(QtCore.QRect(96,102, 57, 48))
-        self.labelcpid.setStyleSheet("background-color: rgb(54, 54, 54);"
+        self.labelcpid.setStyleSheet("background-color: rgb(44, 44, 44);"
 "font: 12pt \"SimHei\"; "
 "color: rgb(102, 102, 102);"
 "border-top-left-radius: 5px; "
@@ -25,7 +25,7 @@ class Ui_Login(object):
         self.labelcpid.setObjectName("labelcpid")
         self.labelpassword = QtGui.QLabel(Login)
         self.labelpassword.setGeometry(QtCore.QRect(96, 152, 57, 51))
-        self.labelpassword.setStyleSheet("background-color: rgb(54, 54, 54);"
+        self.labelpassword.setStyleSheet("background-color: rgb(44, 44, 44);"
 "font: 12pt \"SimHei\"; "
 "color: rgb(102, 102, 102);"
 "border-bottom-left-radius: 5px; "
@@ -42,7 +42,7 @@ class Ui_Login(object):
         self.buttoncancel.setObjectName("buttoncancel")
         self.lineeditcpid = QtGui.QLineEdit(Login)
         self.lineeditcpid.setGeometry(QtCore.QRect(152, 102, 205, 48))
-        self.lineeditcpid.setStyleSheet("background-color: rgb(54, 54, 54);"
+        self.lineeditcpid.setStyleSheet("background-color: rgb(44, 44, 44);"
 "border-style:outset; "
 "color: rgb(102, 102, 102);"
 "font: 12pt \"SimHei\"; "
@@ -50,7 +50,7 @@ class Ui_Login(object):
         self.lineeditcpid.setObjectName("lineeditcpid")
         self.lineeditpassword = QtGui.QLineEdit(Login)
         self.lineeditpassword.setGeometry(QtCore.QRect(152, 152, 205, 51))
-        self.lineeditpassword.setStyleSheet("background-color: rgb(54, 54, 54);"
+        self.lineeditpassword.setStyleSheet("background-color: rgb(44, 44, 44);"
 "border-style:outset; "
 "color: rgb(102, 102, 102);"
 "font: 12pt \"SimHei\"; "
@@ -82,12 +82,12 @@ class Ui_Login(object):
         self.buttonforgetpassword.setObjectName("buttonforgetpassword")
         self.label = QtGui.QLabel(Login)
         self.label.setGeometry(QtCore.QRect(96, 142, 7, 17))
-        self.label.setStyleSheet("background-color: rgb(54, 54, 54);")
+        self.label.setStyleSheet("background-color: rgb(44, 44, 44);")
         self.label.setText("")
         self.label.setObjectName("label")
         self.label_2 = QtGui.QLabel(Login)
         self.label_2.setGeometry(QtCore.QRect(320, 140,7, 25))
-        self.label_2.setStyleSheet("background-color: rgb(54, 54, 54);")
+        self.label_2.setStyleSheet("background-color: rgb(44, 44, 44);")
         self.label_2.setText("")
         self.label_2.setObjectName("label_2")
         self.buttonaccept = QtGui.QPushButton(Login)

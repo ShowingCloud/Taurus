@@ -179,12 +179,12 @@ Framerate: Not Less Than 25 Frames/second</source>
         <translation type="obsolete">保存到</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="479"/>
+        <location filename="Frontend/mainwindow.py" line="490"/>
         <source>Finished</source>
         <translation>已完成</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="593"/>
+        <location filename="Frontend/mainwindow.py" line="604"/>
         <source>Select output directory</source>
         <translation>输出路径</translation>
     </message>
@@ -199,7 +199,7 @@ Framerate: Not Less Than 25 Frames/second</source>
         <translation>视频转码：共计 %d 集</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="540"/>
+        <location filename="Frontend/mainwindow.py" line="551"/>
         <source>Transcoding...</source>
         <translation>转码中...</translation>
     </message>
@@ -209,12 +209,12 @@ Framerate: Not Less Than 25 Frames/second</source>
         <translation>保存地址不可用。</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="512"/>
+        <location filename="Frontend/mainwindow.py" line="523"/>
         <source>Verifying File Parameters...</source>
         <translation>验证文件参数……</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="630"/>
+        <location filename="Frontend/mainwindow.py" line="641"/>
         <source>Video Source Criteria Not Met</source>
         <translation>源视频格式要求未满足</translation>
     </message>
@@ -234,9 +234,14 @@ Framerate: Not Less Than 25 Frames/second</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="Frontend/mainwindow.py" line="426"/>
+        <location filename="Frontend/mainwindow.py" line="436"/>
         <source>Start time or stop time invalid.</source>
         <translation>起始时间或结束时间设置有误。</translation>
+    </message>
+    <message>
+        <location filename="Frontend/mainwindow.py" line="419"/>
+        <source>Processing...</source>
+        <translation>处理中……</translation>
     </message>
 </context>
 <context>
@@ -292,17 +297,17 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>Transcoder</name>
     <message>
-        <location filename="Backend/transcoder.py" line="116"/>
+        <location filename="Backend/transcoder.py" line="106"/>
         <source>Transcoding...</source>
         <translation>转码中...</translation>
     </message>
     <message>
-        <location filename="Backend/transcoder.py" line="121"/>
+        <location filename="Backend/transcoder.py" line="111"/>
         <source>Paused</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="Backend/transcoder.py" line="102"/>
+        <location filename="Backend/transcoder.py" line="92"/>
         <source>Finished</source>
         <translation>已完成</translation>
     </message>
@@ -310,7 +315,7 @@ Framerate: Not Less Than 25 Frames/second</source>
 <context>
     <name>VideoMerger</name>
     <message>
-        <location filename="Backend/videomerger.py" line="52"/>
+        <location filename="Backend/videomerger.py" line="49"/>
         <source>Hasn&apos;t chosen any video clips.</source>
         <translation>未选择任何视频片段。</translation>
     </message>
@@ -322,27 +327,27 @@ Framerate: Not Less Than 25 Frames/second</source>
     <message>
         <location filename="Backend/videomerger.py" line="106"/>
         <source>Preprocessed</source>
-        <translation>预处理完成</translation>
+        <translation type="obsolete">预处理完成</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="143"/>
         <source>Prerecoded</source>
-        <translation>预重编码完成</translation>
+        <translation type="obsolete">预重编码完成</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="194"/>
         <source>Merged</source>
-        <translation>合并完成</translation>
+        <translation type="obsolete">合并完成</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="213"/>
         <source>Recoded</source>
-        <translation>重编码完成</translation>
+        <translation type="obsolete">重编码完成</translation>
     </message>
     <message>
         <location filename="Backend/videomerger.py" line="240"/>
         <source>Finished</source>
-        <translation>已完成</translation>
+        <translation type="obsolete">已完成</translation>
     </message>
 </context>
 <context>

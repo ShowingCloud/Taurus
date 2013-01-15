@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, tempfile, shutil, atexit
+import sys, os
 from PySide import QtCore, QtGui
 
 from Frontend import MainWindow, Login, LoginList, PasswordError
@@ -49,24 +49,5 @@ if __name__ == "__main__":
 	w = MainWindow (l.username, ll.edited, ll.transferred, ll.lastsplittime, ll.lastsplitfile, ll.lastsplitpath, ll.lastmergepath, ll.lasttransferpath)
 	w.move (scr.center() - w.rect().center())
 	w.show()
-
-	if getattr (sys, 'frozen', None):
-		tempdir = sys._MEIPASS
-	else:
-		tempdir = tempfile.mkdtemp (prefix = 'cartoon-')
-		shutil.copy (os.path.join (os.path.curdir, 'ffmpeg.exe'), os.path.join (tempdir, 'ffmpeg.exe'))
-
-	print tempdir
-
-	os.environ['basedir'] = tempdir
-	os.chdir (tempdir)
-
-	tmp = os.path.join (tempdir, 'tmp')
-	while not os.path.exists (tmp):
-		os.makedirs (tmp)
-
-	print tmp
-
-	QtGui.qApp.aboutToQuit.connect (lambda: shutil.rmtree (tmp))
 
 	sys.exit (app.exec_())

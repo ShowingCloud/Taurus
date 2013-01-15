@@ -72,7 +72,7 @@ class SaveSplit (QtGui.QDialog):
 			self.reject()
 			QtGui.qApp.quit()
 		elif event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
-			self.buttonsave.clicked.emit()
+			self.ui.buttonsave.clicked.emit()
 
 	def mouseMoveEvent (self, event):
 		super (SaveSplit, self).mouseMoveEvent (event)
