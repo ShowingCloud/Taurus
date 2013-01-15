@@ -1,0 +1,5 @@
+<RCC>
+	<qresource prefix="/">
+		<file>cartoon_zh_CN.qm</file>
+	</qresource>
+</RCC>
