@@ -5,5 +5,5 @@ from sqlalchemy.ext.declarative import declarative_base
 import pyodbc
 
 
-Engine = create_engine ('mssql://CartoonAdmin:CartoonServerPassword@61.147.79.115/CartoonServer', module = pyodbc)
+Engine = create_engine ('mssql://CartoonAdmin:CartoonServerPassword@www.zhufengxm.com/CartoonServer', module = pyodbc)
 base = declarative_base()

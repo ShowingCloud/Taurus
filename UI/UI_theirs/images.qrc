@@ -1,0 +1,65 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/begin.png</file>
+        <file>images/cancel.png</file>
+        <file>images/China Mobile.png</file>
+        <file>images/cnmobile.png</file>
+        <file>images/convertcancel.png</file>
+        <file>images/convertconvert.png</file>
+        <file>images/convertplus.png</file>
+        <file>images/delete.png</file>
+        <file>images/down.png</file>
+        <file>images/filmleft.png</file>
+        <file>images/filmright.png</file>
+        <file>images/format conversion2.png</file>
+        <file>images/icon.ico</file>
+        <file>images/icon.png</file>
+        <file>images/loadaudiofile.png</file>
+        <file>images/login2.png</file>
+        <file>images/maximize.png</file>
+        <file>images/menu.png</file>
+        <file>images/minimize.png</file>
+        <file>images/Movie Edit.png</file>
+        <file>images/mute.png</file>
+        <file>images/next.png</file>
+        <file>images/pause.png</file>
+        <file>images/pause2.png</file>
+        <file>images/play.png</file>
+        <file>images/plus.png</file>
+        <file>images/previous.png</file>
+        <file>images/restore.png</file>
+        <file>images/round.png</file>
+        <file>images/savebrowse.png</file>
+        <file>images/savecancel.png</file>
+        <file>images/savesave.png</file>
+        <file>images/stop.png</file>
+        <file>images/strongvolume.png</file>
+        <file>images/transparent.png</file>
+        <file>images/up.png</file>
+        <file>images/volume.png</file>
+        <file>images/weakvolume.png</file>
+        <file>images/world cup.png</file>
+        <file>images/Animation Edition2.png</file>
+        <file>images/loadfile_invert.png</file>
+        <file>images/starttime.png</file>
+        <file>images/endtime.png</file>
+        <file>images/leadertitle.png</file>
+        <file>images/gray_invert.png</file>
+        <file>images/bright_invert.png</file>
+        <file>images/bj_control.png</file>
+        <file>images/volume_round.png</file>
+        <file>images/China Mobile icon.png</file>
+        <file>images/close.png</file>
+        <file>images/txt_1.png</file>
+        <file>images/logo.png</file>
+		<file>images/000-1.png</file>
+		<file>images/000-2.png</file>
+		<file>images/000-3.png</file>
+		<file>images/00-1.png</file>
+		<file>images/00-2.png</file>
+		<file>images/00-3.png</file>
+		<file>images/0-1.png</file>
+		<file>images/0-2.png</file>
+		<file>images/0-3.png</file>
+    </qresource>
+</RCC>

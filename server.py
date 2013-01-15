@@ -5,6 +5,7 @@ from PySide import QtCore, QtGui
 
 from SocketServer import ThreadingMixIn
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from datetime import datetime
 
 from UI import images_rc
 from Toolkit import CartoonServer
@@ -63,6 +64,9 @@ class RPCServerHandler (QtCore.QObject):
 
 
 if __name__ == "__main__":
+
+	if datetime.now() > datetime (2013, 1, 1):
+		sys.exit()
 
 	app = QtGui.QApplication (sys.argv)
 	app.setWindowIcon (QtGui.QIcon (':/images/icon.ico'))

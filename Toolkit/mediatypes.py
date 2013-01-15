@@ -26,16 +26,16 @@ class MediaTypes (object):
 
 	thresholdvalue = {'muxer': (None,), 'videooutcaps': (None,), 'audiooutcaps': (None,), 'videowidth': (None, 640),
 			'videoheight': (None, 480), 'length': (None, 0), 'videoframerate': (None, 25),
-			'videobitrate': (None, 4000000), 'audiobitrate': (None, 128000)}
+			'videobitrate': (None, 3500000), 'audiobitrate': (None, 120000)}
 
 	thresholdrela = {'muxer': None, 'videooutcaps': None, 'audiooutcaps': None, 'videowidth': False,
 			'videoheight': False, 'length': False, 'videoframerate': True,
 			'videobitrate': True, 'audiobitrate': True} # True for ALL, False for ANY (to get a FALSE return)
 
 	encapsulation = {
-			'video/mpeg': {'muxer': 'ffmux_vob', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
-			'video/x-mpeg': {'muxer': 'ffmux_vob', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
-			'video/mpegts': {'muxer': 'ffmux_mpeg', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
+			'video/mpeg': {'muxer': 'mpegtsmux', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
+			'video/x-mpeg': {'muxer': 'mpegtsmux', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
+			'video/mpegts': {'muxer': 'mpegtsmux', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
 			'video/x-ms-asf': {'muxer': 'asfmux', 'demuxer': 'asfdemux', 'videoencoder': 'ffenc_wmv2', 'audioencoder': 'ffenc_wmav2'},
 			'video/x-msvideo': {'muxer': 'avimux', 'demuxer': 'avidemux', 'videoencoder': 'xvidenc', 'audioencoder': 'faac'},
 			'video/quicktime': {'muxer': 'qtmux', 'demuxer': 'qtdemux', 'videoencoder': 'xvidenc', 'audioencoder': 'faac'},
@@ -51,14 +51,7 @@ class MediaTypes (object):
 			'x264enc': 15000,
 			'faac': 320000}
 
-	availbitrates = {
-			'ffenc_mp2': list(),
-			'ffenc_wmav2': list(),
-			'faac': list(),
-			'ffenc_mpeg2video': list(),
-			'xvidenc': list(),
-			'ffenc_wmv2': list(),
-			'x264enc': list()}
+	availbitrates = {}
 
 	@staticmethod
 	def validate (params):

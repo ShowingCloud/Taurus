@@ -158,7 +158,7 @@ class RPCHandler (QtCore.QObject, SecureSession):
 		self.newtransferredsignal.connect (self.newtransferred)
 		self.renewparamssignal.connect (self.renewparams)
 
-		self.rpc = xmlrpclib.ServerProxy ("http://61.147.79.115:10207")
+		self.rpc = xmlrpclib.ServerProxy ("http://www.zhufengxm.com:10207")
 
 	def PrepareLogin (self, username, password, key):
 
@@ -188,7 +188,7 @@ class RPCHandler (QtCore.QObject, SecureSession):
 
 		if salt == '':
 			if key == '4646464646464646' and not ALLOW_NOWDG_REG:
-				return ret
+				return PreLoginFailed, None, None
 
 			token = username
 		else:

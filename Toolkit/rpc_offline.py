@@ -133,7 +133,7 @@ class SecureSession (object):
 
 class RPCHandler (QtCore.QObject, SecureSession):
 
-	startchecklogin = QtCore.Signal (unicode, unicode)
+	startchecklogin = QtCore.Signal (unicode, unicode, unicode)
 	checkloginfinished = QtCore.Signal (tuple)
 	newmergedsignal = QtCore.Signal (dict)
 	newsplittedsignal = QtCore.Signal (dict)
@@ -154,7 +154,7 @@ class RPCHandler (QtCore.QObject, SecureSession):
 		self.rpc = xmlrpclib.ServerProxy ("http://61.147.79.115:10207")
 
 	@QtCore.Slot (unicode, unicode)
-	def checklogin (self, username, password):
+	def checklogin (self, username, password, key):
 
 		self.checkloginfinished.emit ((True, dict()))
 		return

@@ -77,10 +77,10 @@ class VideoSplitter (QtCore.QObject):
 		acomp.connect ("pad-added", self.comp_pad, aconv)
 		vident = gst.element_factory_make ('identity')
 		vident.set_property ('single-segment', True)
-#		vident.set_property ('sync', True)
+		vident.set_property ('sync', True)
 		aident = gst.element_factory_make ('identity')
 		aident.set_property ('single-segment', True)
-#		aident.set_property ('sync', True)
+		aident.set_property ('sync', True)
 
 		if not self.totranscode:
 			vencode = gst.element_factory_make (self.params.get ('videoencoder'))
