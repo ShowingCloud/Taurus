@@ -1,0 +1,25 @@
+<RCC>
+	<qresource prefix="/">
+		<file>images/Animation Edition2.png</file>
+		<file>images/begin.png</file>
+		<file>images/cancel.png</file>
+		<file>images/China Mobile icon.png</file>
+		<file>images/China Mobile.png</file>
+		<file>images/delete.png</file>
+		<file>images/download.png</file>
+		<file>images/format conversion2.png</file>
+		<file>images/icon.png</file>
+		<file>images/import into video files .png</file>
+		<file>images/login2.png</file>
+		<file>images/Movie Edit.png</file>
+		<file>images/next.png</file>
+		<file>images/pause.png</file>
+		<file>images/play.png</file>
+		<file>images/plus.png</file>
+		<file>images/previous.png</file>
+		<file>images/stop.png</file>
+		<file>images/upload.png</file>
+		<file>images/volume.png</file>
+		<file>images/world cup.png</file>
+	</qresource>
+</RCC>
