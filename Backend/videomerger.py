@@ -1,28 +1,33 @@
 #!/usr/bin/python
 
-import os, subprocess
+import os, subprocess, time
 import gobject, gst
 from PySide import QtCore, QtGui
+
+from Toolkit import RPCHandler
 
 
 class VideoMerger (QtCore.QObject):
 
-	finished = QtCore.Signal()
 	startsignal = QtCore.Signal (unicode, unicode)
+	cancelsignal = QtCore.Signal()
 	appendtasksignal = QtCore.Signal (unicode, int)
 	switchrowsignal = QtCore.Signal (int, int)
 	removerowsignal = QtCore.Signal (int)
 	updatemodel = QtCore.Signal (int, list)
 
-	def __init__ (self, parent = None):
+	def __init__ (self, username, parent = None):
 
 		QtCore.QObject.__init__ (self, parent)
 		gobject.threads_init()
 		self.mainloop = gobject.MainLoop()
+		self.context = self.mainloop.get_context()
 
+		self.username = username
+		self.path = None
 		self.srcfiles = []
-
-		QtGui.qApp.aboutToQuit.connect (self.quitworker)
+		self.status = (0, 0, 0, False)
+		self.proc = None
 
 	@QtCore.Slot (unicode, int)
 	def appendtask (self, srcfile, row):
@@ -31,19 +36,19 @@ class VideoMerger (QtCore.QObject):
 
 	@QtCore.Slot (int, int)
 	def switchrow (self, row1, row2):
-		rows = [i['row'] for i in self.srcfiles]
-		a, b = rows.index (row1), rows.index (row2)
-		self.srcfiles[a], self.srcfiles[b] = self.srcfiles[b], self.srcfiles[a]
+		self.srcfiles[row1], self.srcfiles[row2] = self.srcfiles[row2], self.srcfiles[row1]
 
 	@QtCore.Slot (int)
 	def removerow (self, row):
-		rows = [i['row'] for i in self.srcfiles]
-		r = rows.index (row)
-		self.srcfiles.pop (r)
+		self.srcfiles.pop (row)
 		self.items = len (self.srcfiles)
 
 	@QtCore.Slot (unicode, unicode)
 	def startworker (self, filename, path):
+
+		self.contexttimer = QtCore.QTimer()
+		self.contexttimer.timeout.connect (self.contexthandler)
+		self.contexttimer.start (100)
 
 		if len (self.srcfiles) < 1:
 			msg = QtGui.QMessageBox()
@@ -58,16 +63,155 @@ class VideoMerger (QtCore.QObject):
 			return
 
 		self.dstfile = os.path.join (path, filename)
+		self.path = path
 
-		for i in xrange (self.items):
+		self.status = (1, 0, 0, True)
 
-			self.srcfiles[i]['origname'] = "tmp/orig%d.avi" % (self.srcfiles[i]['row'])
+		self.sendnewmerged (self.username, self.path)
+
+	def sendnewmerged (self, username, path):
+		self.rpcworker = RPCHandler()
+		self.rpc = QtCore.QThread()
+		self.rpcworker.moveToThread (self.rpc)
+		self.rpcworker.startnewmerged.connect (self.rpcworker.newmerged)
+		self.rpcworker.newmergedfinished.connect (self.rpc.quit)
+		self.rpcworker.newmergedfinished.connect (self.rpcworker.deleteLater)
+		self.rpc.finished.connect (self.rpc.deleteLater)
+		self.rpc.start()
+
+		self.rpcworker.startnewmerged.emit (self.username, self.path)
+
+	@QtCore.Slot()
+	def quitworker (self):
+		self.pipeline.set_state (gst.STATE_NULL)
+		self.contexttimer.stop()
+
+	def doworks (self):
+
+		if self.status[0] == 0 or self.status[0] > 9:
+			return
+
+		if self.status[0] == 1:
+			self.status = (2, 0, self.items, True)
+			return
+
+		if self.status[0] == 2:
+			if not self.status[3]:
+				return
+
+			i = self.status[1]
+			if i < self.status[2]:
+
+				self.updatemodel.emit (self.srcfiles[i - 1]['row'], (20, self.tr ("Preprocessed")))
+
+				self.status = (self.status[0], self.status[1] + 1, self.status[2], False)
+
+				self.srcfiles[i]['origname'] = "tmp/orig%d.mpg" % (self.srcfiles[i]['row'])
+
+				self.pipeline = gst.Pipeline ("pipeline")
+				source = gst.element_factory_make ("filesrc")
+				source.set_property ("location", self.srcfiles[i]['srcfile'])
+				sink = gst.element_factory_make ("filesink")
+				sink.set_property ("location", self.srcfiles[i]['origname'])
+				progress = gst.element_factory_make ("progressreport")
+#				progress.set_property ('silent', True)
+				progress.set_property ('update-freq', 1)
+
+				self.pipeline.add (source, progress, sink)
+				gst.element_link_many (source, progress, sink)
+
+				self.bus = self.pipeline.get_bus()
+				self.bus.add_signal_watch()
+				self.bus.enable_sync_message_emission()
+				self.bus.connect ("message", self.on_message)
+				self.bus.connect ("sync-message::element", self.on_sync_message)
+
+				self.pipeline.set_state (gst.STATE_PLAYING)
+				return
+
+			else:
+				self.status = (3, 0, self.items, True)
+				return
+
+		if self.status[0] == 3:
+			if self.proc is None or self.proc.poll() is None:
+				if self.status[3]:
+					self.status = (self.status[0], self.status[1], self.status[2], False)
+				else:
+					return
+
+			i = self.status[1]
+			if i < self.status[2]:
+
+				self.updatemodel.emit (self.srcfiles[i]['row'], (40, self.tr ("Prerecoded")))
+
+				self.status = (self.status[0], self.status[1] + 1, self.status[2], False)
+
+				self.srcfiles[i]['recodename'] = "tmp/recode%d.mpg" % (self.srcfiles[i]['row'])
+
+				self.proc = subprocess.Popen (["ffmpeg.exe", "-y", "-i", self.srcfiles[i]['origname'],
+					"-b:a", "128000", "-b:v", "1024000", self.srcfiles[i]['recodename']], shell = True)
+				return
+
+			else:
+				self.status = (4, 0, 0, True)
+				self.proc = None
+				return
+
+		if self.status[0] == 4:
+
+			command = ["copy", "/y"]
+			rows = [i['row'] for i in self.srcfiles]
+
+			for i in xrange (self.items):
+
+				if not i == 0:
+					command.append ("+")
+
+				r = rows.index (i)
+				command.append ("%s%s" % (self.srcfiles[r]['recodename'].replace ('/', '\\'), "/b"))
+
+			command.append ("tmp\\merged.mpg/b")
+
+			print command
+
+			self.proc = subprocess.Popen (command, shell = True)
+			self.status = (5, 0, 0, True)
+			return
+
+		if self.status[0] == 5:
+			if self.proc == None or self.proc.poll() == None:
+				return
+
+			for i in xrange (self.items):
+				self.updatemodel.emit (i, (60, self.tr ("Merged")))
+
+			self.status = (6, 0, 0, True)
+			return
+
+		if self.status[0] == 6:
+
+			self.proc = subprocess.Popen (["ffmpeg.exe", "-y", "-i", "tmp/merged.mpg", "-b:a", "128000", "-b:v", "1024000",
+				"tmp/final.mpg"], shell = True)
+			self.status = (7, 0, 0, True)
+			return
+
+		if self.status[0] == 7:
+			if self.proc == None or self.proc.poll() == None:
+				return
+
+			for i in xrange (self.items):
+				self.updatemodel.emit (i, (80, self.tr ("Recoded")))
+
+			self.status = (8, 0, 0, True)
+
+		if self.status[0] == 8:
 
 			self.pipeline = gst.Pipeline ("pipeline")
 			source = gst.element_factory_make ("filesrc")
-			source.set_property ("location", self.srcfiles[i]['srcfile'])
+			source.set_property ("location", "tmp/final.mpg")
 			sink = gst.element_factory_make ("filesink")
-			sink.set_property ("location", self.srcfiles[i]['origname'])
+			sink.set_property ("location", self.dstfile)
 			progress = gst.element_factory_make ("progressreport")
 #			progress.set_property ('silent', True)
 			progress.set_property ('update-freq', 1)
@@ -82,74 +226,18 @@ class VideoMerger (QtCore.QObject):
 			self.bus.connect ("sync-message::element", self.on_sync_message)
 
 			self.pipeline.set_state (gst.STATE_PLAYING)
-			self.mainloop.run()
-			self.pipeline.set_state (gst.STATE_NULL)
+			self.status = (9, 0, 0, False)
 
-			self.updatemodel.emit (self.srcfiles[i]['row'], (20, self.tr ("Preprocessed")))
-
-		for i in xrange (self.items):
-
-			self.srcfiles[i]['recodename'] = "tmp/recode%d.avi" % (self.srcfiles[i]['row'])
-
-			if subprocess.call (["ffmpeg.exe", "-y", "-i", self.srcfiles[i]['origname'], "-b:a", "128000", "-b:v", "1024000", self.srcfiles[i]['recodename']], shell = True) != 0:
-				print "Error when preprocessing video: %s" % self.srcfiles[i]['origname']
+		if self.status[0] == 9:
+			if not self.status[3]:
 				return
 
-			self.updatemodel.emit (self.srcfiles[i]['row'], (40, self.tr ("Prerecoded")))
+			for i in xrange (self.items):
+				self.updatemodel.emit (i, (100, self.tr ("Finished")))
 
-		command = ["copy", "/y"]
-		rows = [i['row'] for i in self.srcfiles]
+			self.status = (10, 0, 0, True)
 
-		for i in xrange (self.items):
-
-			if not i == 0:
-				command.append ("+")
-
-			r = rows.index (i)
-			command.append ("%s%s" % (self.srcfiles[r]['recodename'].replace ('/', '\\'), "/b"))
-
-		command.append ("tmp\\merged.avi/b")
-
-		print command
-
-		if subprocess.call (command, shell = True) != 0:
-			print "Error copying file together"
 			return
-
-		for i in xrange (self.items):
-			self.updatemodel.emit (i, (60, self.tr ("Merged")))
-
-		if subprocess.call (["ffmpeg.exe", "-y", "-i", "tmp/merged.avi", "-b:a", "128000", "-b:v", "1024000", "tmp/final.avi"], shell = True) != 0:
-			print "Error when processing output video"
-			return
-
-		for i in xrange (self.items):
-			self.updatemodel.emit (i, (80, self.tr ("Recoded")))
-
-		self.pipeline = gst.Pipeline ("pipeline")
-		source = gst.element_factory_make ("filesrc")
-		source.set_property ("location", "tmp/final.avi")
-		sink = gst.element_factory_make ("filesink")
-		sink.set_property ("location", self.dstfile)
-		progress = gst.element_factory_make ("progressreport")
-#		progress.set_property ('silent', True)
-		progress.set_property ('update-freq', 1)
-
-		self.pipeline.add (source, progress, sink)
-		gst.element_link_many (source, progress, sink)
-
-		self.bus = self.pipeline.get_bus()
-		self.bus.add_signal_watch()
-		self.bus.enable_sync_message_emission()
-		self.bus.connect ("message", self.on_message)
-		self.bus.connect ("sync-message::element", self.on_sync_message)
-
-		self.pipeline.set_state (gst.STATE_PLAYING)
-		self.mainloop.run()
-		self.pipeline.set_state (gst.STATE_NULL)
-
-		for i in xrange (self.items):
-			self.updatemodel.emit (i, (100, self.tr ("Finished")))
 
 #		tmpfile = os.path.join (os.getcwd(), "tmp/raw.avi")
 #		if os.path.exists (tmpfile):
@@ -158,22 +246,14 @@ class VideoMerger (QtCore.QObject):
 #		if os.path.exists (tmpfile):
 #			os.remove (tmpfile)
 
-		self.finished.emit()
-
-	@QtCore.Slot()
-	def quitworker (self):
-		if self.mainloop.is_running():
-			self.mainloop.quit()
-
 	def on_message (self, bus, message):
 		if message.type == gst.MESSAGE_EOS:
 			self.pipeline.set_state(gst.STATE_NULL)
-			self.mainloop.quit()
+			self.status = (self.status[0], self.status[1], self.status[2], True)
 		elif message.type == gst.MESSAGE_ERROR:
 			self.pipeline.set_state(gst.STATE_NULL)
 			err, debug = message.parse_error()
 			print 'Error: %s' % err, debug
-			self.mainloop.quit()
 		elif message.type == gst.MESSAGE_ELEMENT:
 			pass
 
@@ -191,3 +271,11 @@ class VideoMerger (QtCore.QObject):
 	    elif 'video' in name:
 	        if not self.__vpad.is_linked():
 	            pad.link (self.__vpad)
+
+
+	def contexthandler (self):
+		if self.context.pending():
+			self.context.iteration()
+
+		self.doworks()
+

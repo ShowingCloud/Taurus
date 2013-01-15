@@ -165,7 +165,7 @@ class CartoonServer (object):
 			record.LastSplitPath = path
 			return True
 
-	def NewTransfered (self, username, path):
+	def NewTransferred (self, username, path):
 
 		session = self.Session()
 

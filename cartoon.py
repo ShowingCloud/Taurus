@@ -3,7 +3,7 @@
 import sys
 from PySide import QtCore, QtGui
 
-from Frontend import MainWindow, Login, LoginList
+from Frontend import MainWindow, Login, LoginList, PasswordError
 import Translations
 
 
@@ -32,18 +32,17 @@ if __name__ == "__main__":
 			sys.exit()
 
 		ll = LoginList (l.username, l.password)
-		ll.move (l.pos())
+		ll.move (l.pos() + l.rect().center() - ll.rect().center())
 		ret = ll.exec_()
 
-		if ret == QtGui.QDialog.Rejected:
-			sys.exit()
-		elif ret == QtGui.QDialog.Accepted:
+		if ret == QtGui.QDialog.Accepted:
 			islogin = True
 		else:
 			l.show()
-			mbox = QtGui.QMessageBox()
-			mbox.setText (QtCore.QObject().tr ("Login error."))
-			mbox.exec_()
+
+			pe = PasswordError()
+			pe.move (l.pos() + l.rect().center() - pe.rect().center())
+			pe.exec_()
 			islogin = False
 
 	w = MainWindow (l.username, ll.edited, ll.transfered, ll.lastsplittime, ll.lastsplitfile, ll.lastsplitpath, ll.lastmergepath, ll.lasttransferpath)

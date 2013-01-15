@@ -5,9 +5,9 @@ from PySide import QtCore, QtGui
 from ctypes import pythonapi, c_void_p, py_object
 
 from UI import Ui_MainWindow
-from Frontend import MergeExam
+from Frontend import MergeExam, NewConvert, SaveSplit
 from Backend import Player, VideoSplitter, VideoMerger, MediaFileChecker, Transcoder
-from Toolkit import TransferDelegate, MergeDelegate, time2str, str2time
+from Toolkit import TransferDelegate, MergeDelegate, time2str, str2time, time2lstr
 
 TransTaskProcessing, TransTaskFinished, TransTaskDeleted = xrange (3)
 MergeTaskProcessing, MergeTaskFinished, MergeTaskDeleted = xrange (3)
@@ -20,6 +20,7 @@ class MainWindow (QtGui.QMainWindow):
 			lastmergepath, lasttransferpath, parent = None):
 		QtGui.QMainWindow.__init__ (self, parent)
 
+		self.username = username
 		self.edited = edited
 		self.transfered = transfered
 		self.lastsplittime = lastsplittime
@@ -45,6 +46,7 @@ class MainWindow (QtGui.QMainWindow):
 		self.checkers = []
 		self.splitchoose = SplitNotChosen
 		self.updatelineeditblocked = False
+		self.playerfile = None
 
 		self.leftclicked = False
 
@@ -83,17 +85,11 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.transview.setRootIsDecorated (False)
 		self.ui.transview.setAlternatingRowColors (True)
 		self.ui.transview.setItemDelegate (TransferDelegate (self))
-		for i in xrange (4):
-			self.ui.transview.setColumnWidth (i, 170)
-		self.ui.transview.header().setDefaultAlignment (QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
 		self.ui.mergeview.setModel (self.mergemodel (self))
 		self.ui.mergeview.setRootIsDecorated (False)
 		self.ui.mergeview.setAlternatingRowColors (True)
 		self.ui.mergeview.setItemDelegate (MergeDelegate (self))
-		for i in xrange (4):
-			self.ui.mergeview.setColumnWidth (i, 200)
-		self.ui.mergeview.header().setDefaultAlignment (QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
 		self.ui.stackedWidget.setCurrentIndex (0)
 
@@ -111,7 +107,7 @@ class MainWindow (QtGui.QMainWindow):
 
 		self.ui.buttoncancelbrowse.hide()
 
-		self.ui.labelduration.setAlignment (QtCore.Qt.AlignHCenter)
+		self.ui.labelfilmtitle.setAlignment (QtCore.Qt.AlignHCenter)
 
 	@QtCore.Slot (int)
 	def trayiconactivated (self, event):
@@ -165,44 +161,33 @@ class MainWindow (QtGui.QMainWindow):
 		self.ui.frame_2.mousePressEvent = self.mousePressEvent
 		self.ui.frame_2.mouseReleaseEvent = self.frameMouseRelease
 
-		self.playerworker = Player (self.windowId, self.ui.sliderseek.minimum(), self.ui.sliderseek.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
-#		self.player = QtCore.QThread()
-#		self.playerworker.moveToThread (self.player)
+		self.player = Player (self.windowId, self.ui.sliderseek.minimum(), self.ui.sliderseek.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
 
-		self.ui.buttonplayerplay.clicked.connect (self.playerworker.playclicked)
-		self.ui.buttonplayerstop.clicked.connect (self.playerworker.stopclicked)
-		self.ui.buttonplayerbackward.clicked.connect (self.playerworker.backwardclicked)
-		self.ui.buttonplayerforward.clicked.connect (self.playerworker.forwardclicked)
-		self.ui.buttonvolume.clicked.connect (self.playerworker.muteornot)
-		self.ui.sliderseek.valueChanged.connect (self.playerworker.sliderseekvalue)
-		self.ui.slidervolume.valueChanged.connect (self.playerworker.slidervolumevalue)
+		self.ui.buttonplayerplay.clicked.connect (self.player.playclicked)
+		self.ui.buttonplayerstop.clicked.connect (self.player.stopclicked)
+		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclicked)
+		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclicked)
+		self.ui.buttonvolume.clicked.connect (self.player.muteornot)
+		self.ui.sliderseek.valueChanged.connect (self.player.sliderseekvalue)
+		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevalue)
 
-		self.playerworker.playurisignal.connect (self.playerworker.playuri)
-		self.playerworker.updatelabelduration.connect (self.updatelabelduration)
-		self.playerworker.updatesliderseek.connect (self.updatesliderseek)
-		self.playerworker.updateslidervolume.connect (self.updateslidervolume)
-		self.playerworker.updatelineedit.connect (self.updatelineedit)
-		self.playerworker.setbuttonplay.connect (self.playersetbuttonplay)
-		self.playerworker.setbuttonpause.connect (self.playersetbuttonpause)
-		self.playerworker.setloopsignal.connect (self.playerworker.setloop)
+		self.player.playurisignal.connect (self.player.playuri)
+		self.player.updatelabelduration.connect (self.updatelabelduration)
+		self.player.updatesliderseek.connect (self.updatesliderseek)
+		self.player.updateslidervolume.connect (self.updateslidervolume)
+		self.player.updatelineedit.connect (self.updatelineedit)
+		self.player.setbuttonplay.connect (self.playersetbuttonplay)
+		self.player.setbuttonpause.connect (self.playersetbuttonpause)
+		self.player.setloopsignal.connect (self.player.setloop)
 
-#		self.player.started.connect (self.playerworker.startworker)
-#		self.playerworker.finished.connect (self.player.quit)
-		self.playerworker.startworker()
-		self.playerworker.finished.connect (self.playerworker.deleteLater)
-#		self.player.finished.connect (self.player.deleteLater)
-
-#		QtGui.qApp.aboutToQuit.connect (self.player.quit)
-#		QtGui.qApp.aboutToQuit.connect (self.player.wait)
-
-#		self.player.start()
+		self.player.startworker()
 
 	@QtCore.Slot()
 	def on_buttonloadfile_clicked (self):
 
-		self.playerfile = QtGui.QFileDialog.getOpenFileName (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
+		self.playerfile = QtGui.QFileDialog.getOpenFileName (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MoviesLocation))[0]
 		if self.playerfile:
-			self.playerworker.playurisignal.emit (self.playerfile)
+			self.player.playurisignal.emit (self.playerfile)
 			self.ui.labelfilmtitle.setText (QtCore.QFileInfo (self.playerfile).fileName())
 
 	@QtCore.Slot (unicode)
@@ -260,7 +245,7 @@ class MainWindow (QtGui.QMainWindow):
 
 	@QtCore.Slot()
 	def on_buttoncancelbrowse_clicked (self):
-		self.playerworker.setloopsignal.emit (0, 0)
+		self.player.setloopsignal.emit (0, 0)
 
 		self.ui.buttoncancelbrowse.hide()
 		self.ui.buttonpreview.show()
@@ -281,34 +266,27 @@ class MainWindow (QtGui.QMainWindow):
 		if starttime < 0 or stoptime <= starttime:
 			return
 
-		self.playerworker.setloopsignal.emit (self.ui.lineeditstarttime.text(), self.ui.lineeditendtime.text())
+		self.player.setloopsignal.emit (self.ui.lineeditstarttime.text(), self.ui.lineeditendtime.text())
 
 		self.ui.buttonpreview.hide()
 		self.ui.buttoncancelbrowse.show()
 
 	def createmerger (self):
 
-		self.mergerworker = VideoMerger()
-		self.merger = QtCore.QThread()
-		self.mergerworker.moveToThread (self.merger)
+		self.merger = VideoMerger (self.username)
 
-		self.mergerworker.appendtasksignal.connect (self.mergerworker.appendtask)
-		self.mergerworker.switchrowsignal.connect (self.mergerworker.switchrow)
-		self.mergerworker.removerowsignal.connect (self.mergerworker.removerow)
-
-		self.mergerworker.startsignal.connect (self.mergerworker.startworker)
-		self.mergerworker.updatemodel.connect (self.updatemergemodel)
-		self.mergerworker.finished.connect (self.merger.quit)
-		self.mergerworker.finished.connect (self.mergerworker.deleteLater)
-		self.merger.finished.connect (self.merger.deleteLater)
-
-		QtGui.qApp.aboutToQuit.connect (self.merger.quit)
-		QtGui.qApp.aboutToQuit.connect (self.merger.wait)
+		self.merger.appendtasksignal.connect (self.merger.appendtask)
+		self.merger.switchrowsignal.connect (self.merger.switchrow)
+		self.merger.removerowsignal.connect (self.merger.removerow)
+		self.merger.updatemodel.connect (self.updatemergemodel)
+		self.merger.startsignal.connect (self.merger.startworker)
+		self.merger.cancelsignal.connect (self.merger.quitworker)
 
 	@QtCore.Slot()
 	def on_buttonplus_clicked (self):
 
-		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
+		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"),
+				QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MoviesLocation))[0]
 		model = self.ui.mergeview.model()
 
 		while len (files) > 0:
@@ -322,22 +300,12 @@ class MainWindow (QtGui.QMainWindow):
 
 			self.ui.labelmerge.setText (self.tr ("There are %d video clips to be merged.") % (row + 1))
 
-			checkerworker = MediaFileChecker (newfile.absoluteFilePath(), len (self.checkers))
-			checker = QtCore.QThread()
-			checkerworker.moveToThread (checker)
+			checker = MediaFileChecker (newfile.absoluteFilePath(), len (self.checkers))
+			checker.discoveredsignal.connect (self.mediafilediscovered)
+			checker.startworker()
+			self.checkers.append ({"worker": checker, "operation": "Merge", "row": row, "file": newfile})
 
-			checkerworker.discoveredsignal.connect (self.mediafilediscovered)
-			checker.started.connect (checkerworker.startworker)
-			checkerworker.finished.connect (checker.quit)
-			checkerworker.finished.connect (checkerworker.deleteLater)
-			checker.finished.connect (self.checker.deleteLater)
-
-			QtGui.qApp.aboutToQuit.connect (self.checker.quit)
-			QtGui.qApp.aboutToQuit.connect (self.checker.wait)
-
-			checker.start()
-
-			self.checkers.append ({"worker": checkerworker, "thread": checker, "operation": "Merge", "row": row, "file": newfile})
+			self.merger.appendtasksignal.emit (newfile.absoluteFilePath(), row)
 
 	@QtCore.Slot()
 	def on_buttonup_clicked (self):
@@ -348,7 +316,7 @@ class MainWindow (QtGui.QMainWindow):
 			return
 		
 		model.insertRow (row - 1, model.takeRow (row))
-		self.mergerworker.switchrowsignal.emit (row, row - 1)
+		self.merger.switchrowsignal.emit (row, row - 1)
 		self.ui.mergeview.setCurrentIndex (model.index (row - 1, 0))
 
 	@QtCore.Slot()
@@ -360,22 +328,22 @@ class MainWindow (QtGui.QMainWindow):
 			return
 
 		model.insertRow (row + 1, model.takeRow (row))
-		self.mergerworker.switchrowsignal.emit (row, row + 1)
+		self.merger.switchrowsignal.emit (row, row + 1)
 		self.ui.mergeview.setCurrentIndex (model.index (row + 1, 0))
 
 	@QtCore.Slot()
 	def on_buttondelete_clicked (self):
 		row = self.ui.mergeview.currentIndex().row()
 		self.ui.mergeview.model().takeRow (row)
-		self.mergerworker.removerowsignal.emit (row)
+		self.merger.removerowsignal.emit (row)
 
 	@QtCore.Slot()
 	def on_buttonstart_clicked (self):
-		self.mergerworker.startsignal.emit (self.ui.lineeditfilenameblank.text(), self.ui.lineeditsaveblank.text())
+		self.merger.startsignal.emit (self.ui.lineeditfilenameblank.text(), self.ui.lineeditsaveblank.text())
 
 	@QtCore.Slot()
 	def on_buttoncancel_clicked (self):
-		pass
+		self.merger.cancelsignal.emit()
 
 	@QtCore.Slot()
 	def on_buttonexamine_clicked (self):
@@ -405,36 +373,22 @@ class MainWindow (QtGui.QMainWindow):
 		if starttime < 0 or duration <= 0:
 			return
 
-		model = self.ui.transview.model()
-		row = model.rowCount()
-		model.insertRow (row)
-
-		model.setData (model.index (row, 0), self.playerfile)
-		model.setData (model.index (row, 1), 0)
-		model.setData (model.index (row, 2), self.tr ("Not Started"))
-
-		outputname = QtGui.QFileDialog.getSaveFileName (self, self.tr ("Save destination"))[0]
-		if not outputname:
+		ss = SaveSplit (self.lastsplitpath)
+		ss.move (self.pos() + self.rect().center() - ss.rect().center())
+		if not ss.exec_() == QtGui.QDialog.Accepted:
 			return
 
-		model.setData (model.index (row, 3), outputname)
+		outputname = os.path.join (ss.splitpath, ss.splitfile)
 
-		splitterworker = VideoSplitter (self.playerfile, outputname, time2str (starttime), time2str (duration), row)
-		splitter = QtCore.QThread()
-		splitterworker.moveToThread (splitter)
+		if self.ui.checkboxleadertitle.isChecked():
+			title = self.ui.lineeditleadertitle.text()
+		else:
+			title = None
 
-		splitter.started.connect (splitterworker.startworker)
-		splitterworker.updatemodel.connect (self.updatetransmodel)
-		splitterworker.finished.connect (splitter.quit)
-		splitterworker.finished.connect (splitterworker.deleteLater)
-		splitter.finished.connect (self.splitter.deleteLater)
+		time = "%s -- %s" % (time2str (starttime), time2str (stoptime))
 
-		QtGui.qApp.aboutToQuit.connect (self.splitter.quit)
-		QtGui.qApp.aboutToQuit.connect (self.splitter.wait)
-
-		splitter.start()
-
-		self.transcoding.append ({"thread": splitter, "worker": splitterworker, "status": TransTaskProcessing})
+		self.splitter = VideoSplitter (self.playerfile, outputname, time2lstr (starttime), time2lstr (duration), title, 0)
+		self.splitter.startworker (self.username, time, ss.splitfile, ss.splitpath)
 
 	@QtCore.Slot (int, list)
 	def updatetransmodel (self, row, value):
@@ -467,57 +421,48 @@ class MainWindow (QtGui.QMainWindow):
 	@QtCore.Slot()
 	def on_buttontransnew_clicked (self):
 
-		files = QtGui.QFileDialog.getOpenFileNames (self, self.tr ("Open"), QtGui.QDesktopServices.storageLocation (QtGui.QDesktopServices.MusicLocation))[0]
-		newpath = QtGui.QFileDialog.getExistingDirectory (self, self.tr ("Select output directory"))
 		model = self.ui.transview.model()
 
-		while len (files) > 0:
-			newfile = QtCore.QFileInfo (files.pop (0))
-			row = model.rowCount()
-			model.insertRow (row)
+		nc = NewConvert (self.lasttransferpath)
+		if nc.exec_() == QtGui.QDialog.Accepted:
 
-			model.setData (model.index (row, 0), newfile.fileName())
-			model.setData (model.index (row, 1), 0)
-			model.setData (model.index (row, 2), self.tr ("Not Started"))
+			files = nc.files
+			newpath = nc.transferpath
 
-			if newpath == "":
-				newpath = newfile.absolutePath()
-			model.setData (model.index (row, 3), newpath)
+			while len (files) > 0:
+				newfile = QtCore.QFileInfo (files.pop (0))
+				row = model.rowCount()
+				model.insertRow (row)
 
-			dstfile = newpath + "/" + newfile.baseName() + "-change.mp4"
+				model.setData (model.index (row, 0), newfile.fileName())
+				model.setData (model.index (row, 1), 0)
+				model.setData (model.index (row, 2), self.tr ("Transcoding..."))
 
-			transcodeworker = Transcoder (newfile.absoluteFilePath(), dstfile, row)
-			transcode = QtCore.QThread()
-			transcodeworker.moveToThread (transcode)
+				model.setData (model.index (row, 3), newpath)
 
-			transcodeworker.playsignal.connect (transcodeworker.play)
-			transcodeworker.pausesignal.connect (transcodeworker.pause)
-			transcodeworker.removesignal.connect (transcodeworker.remove)
-			transcodeworker.updatemodel.connect (self.updatetransmodel)
+				dstfile = newpath + "/" + newfile.baseName() + "-change.mp4"
 
-			transcode.started.connect (transcodeworker.startworker)
-			transcodeworker.finished.connect (transcode.quit)
-			transcodeworker.finished.connect (transcodeworker.deleteLater)
-			transcodeworker.finished.connect (self.splitter.deleteLater)
+				transcode = Transcoder (newfile.absoluteFilePath(), dstfile, self.username, newpath, row)
 
-			QtGui.qApp.aboutToQuit.connect (transcodeworker.quit)
-			QtGui.qApp.aboutToQuit.connect (transcodeworker.wait)
+				transcode.playsignal.connect (transcode.play)
+				transcode.pausesignal.connect (transcode.pause)
+				transcode.removesignal.connect (transcode.remove)
+				transcode.updatemodel.connect (self.updatetransmodel)
 
-			transcode.start()
-
-			self.transcoding.append ({"thread": transcode, "worker": transcodeworker, "status": TransTaskProcessing})
+				transcode.startworker()
+				self.transcoding.append ({"worker": transcode, "status": TransTaskProcessing})
 
 	@QtCore.Slot()
 	def on_buttontransbegin_clicked (self):
-		row = self.ui.transview.currentIndex().row()
-		if self.transcoding [row] ["status"] == TransTaskProcessing:
-			self.transcoding [row] ["worker"].playsignal.emit()
+		for i in xrange (self.ui.transview.model().rowCount()):
+			if self.transcoding [i] ["status"] == TransTaskProcessing:
+				self.transcoding [i] ["worker"].playsignal.emit()
 
 	@QtCore.Slot()
 	def on_buttontranspause_clicked (self):
-		row = self.ui.transview.currentIndex().row()
-		if self.transcoding [row] ["status"] == TransTaskProcessing:
-			self.transcoding [row] ["worker"].pausesignal.emit()
+		for i in xrange (self.ui.transview.model().rowCount()):
+			if self.transcoding [i] ["status"] == TransTaskProcessing:
+				self.transcoding [i] ["worker"].pausesignal.emit()
 
 	@QtCore.Slot()
 	def on_buttontransdelete_clicked (self):
@@ -573,8 +518,6 @@ class MainWindow (QtGui.QMainWindow):
 			model = self.ui.mergeview.model()
 			model.setData (model.index (row, 1), "%s" % (time2str (params[2])))
 			model.setData (model.index (row, 2), "%d X %d" % (params[0], params[1]))
-
-			self.mergerworker.appendtasksignal.emit (checker["file"].absoluteFilePath(), checker["row"])
 
 	def eventFilter (self, obj, event):
 		if event.type() == QtCore.QEvent.FocusIn and not self.updatelineeditblocked:

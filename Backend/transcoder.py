@@ -3,22 +3,28 @@
 import gobject, gst
 from PySide import QtCore, QtGui
 
-class Transcoder (QtCore.QThread):
+from Toolkit import RPCHandler
 
-	finished = QtCore.Signal()
+
+class Transcoder (QtCore.QObject):
+
 	updatemodel = QtCore.Signal (int, list)
 	playsignal = QtCore.Signal()
 	pausesignal = QtCore.Signal()
 	removesignal = QtCore.Signal()
 
-	def __init__ (self, srcfile, dstfile, row, parent = None):
+	def __init__ (self, srcfile, dstfile, username, path, row, parent = None):
 
-		QtCore.QThread.__init__ (self, parent)
+		QtCore.QObject.__init__ (self, parent)
 		gobject.threads_init()
 		self.mainloop = gobject.MainLoop()
+		self.context = self.mainloop.get_context()
+
 		self.srcfile = srcfile
 		self.dstfile = dstfile
 		self.row = row
+		self.username = username
+		self.path = path
 
 		QtGui.qApp.aboutToQuit.connect (self.remove)
 
@@ -65,10 +71,25 @@ class Transcoder (QtCore.QThread):
 		self.bus.connect ("message", self.on_message)
 		self.bus.connect ("sync-message::element", self.on_sync_message)
 
-		self.pipeline.set_state (gst.STATE_PAUSED)
-		self.mainloop.run()
-		self.pipeline.set_state (gst.STATE_NULL)
-		self.finished.emit()
+		self.timer = QtCore.QTimer()
+		self.timer.timeout.connect (lambda: self.context.pending() and self.context.iteration())
+		self.timer.start (100)
+
+		self.pipeline.set_state (gst.STATE_PLAYING)
+
+		self.sendnewtransferred (self.username, self.path)
+
+	def sendnewtransferred (self, username, path):
+		self.rpcworker = RPCHandler()
+		self.rpc = QtCore.QThread()
+		self.rpcworker.moveToThread (self.rpc)
+		self.rpcworker.startnewtransferred.connect (self.rpcworker.newtransferred)
+		self.rpcworker.newtransferredfinished.connect (self.rpc.quit)
+		self.rpcworker.newtransferredfinished.connect (self.rpcworker.deleteLater)
+		self.rpc.finished.connect (self.rpc.deleteLater)
+		self.rpc.start()
+
+		self.rpcworker.startnewtransferred.emit (self.username, self.path)
 
 	@QtCore.Slot()
 	def play (self):
@@ -83,21 +104,15 @@ class Transcoder (QtCore.QThread):
 	@QtCore.Slot()
 	def remove (self):
 		self.pipeline.set_state (gst.STATE_NULL)
-		self.mainloop.quit()
-		self.finished.emit()
 
 	def on_message (self, bus, message):
 		if message.type == gst.MESSAGE_EOS:
 			self.pipeline.set_state(gst.STATE_NULL)
 			self.updatemodel.emit (self.row, (100, self.tr ("Finished")))
-			self.mainloop.quit()
-			self.finished.emit()
 		elif message.type == gst.MESSAGE_ERROR:
 			self.pipeline.set_state(gst.STATE_NULL)
 			err, debug = message.parse_error()
 			print 'Error: %s' % err, debug
-			self.mainloop.quit()
-			self.finished.emit()
 		elif message.type == gst.MESSAGE_ELEMENT:
 			if message.structure.get_name() == "progress":
 				self.updatemodel.emit (self.row, (message.structure ['percent'], None))

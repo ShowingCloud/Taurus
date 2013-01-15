@@ -15,15 +15,23 @@ def time2str (t):
 		return "%i:%02i:%02i.%03i" % (h, m, s, ms)
 
 
+def time2lstr (t):
+	ms, ns = divmod (t, 1000000)
+	s, ms = divmod (ms, 1000)
+	m, s = divmod (s, 60)
+	h, m = divmod (m, 60)
+
+	return "%02i:%02i:%02i.%03i" % (h, m, s, ms)
+
+
 def str2time (s):
-	multi = 1L
+	multi = 1000000000L
 	ns = 0L
 
 	lst = re.findall (r'\d+', s)
 
 	if not re.findall (r'\d+\.\d+$', s) == []:
 		ns = long (lst.pop().ljust (9, '0') [0 : 10])
-		multi = 1000000000L
 
 	while len (lst) > 0:
 		ns += long (lst.pop()) * multi

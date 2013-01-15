@@ -18,7 +18,6 @@ class MergeExam (QtGui.QDialog):
 			msg = QtGui.QMessageBox()
 			msg.setInformativeText (self.tr ("File invalid."))
 			msg.exec_()
-			print "rejected"
 			QtGui.qApp.postEvent (self, QtGui.QCloseEvent())
 			return
 
@@ -26,54 +25,38 @@ class MergeExam (QtGui.QDialog):
 		self.ui.setupUi (self)
 		self.setWindowFlags (QtCore.Qt.FramelessWindowHint)
 
+		self.leftclicked = False
+
 		winid = self.ui.frameaudio.winId()
 		pythonapi.PyCObject_AsVoidPtr.restype = c_void_p
 		pythonapi.PyCObject_AsVoidPtr.argtypes = [py_object]
 		self.windowId = pythonapi.PyCObject_AsVoidPtr (winid)
 
-		self.playerworker = Player (self.windowId, self.ui.Sliderprogress.minimum(), self.ui.Sliderprogress.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
-		self.player = QtCore.QThread()
-		self.playerworker.moveToThread (self.player)
+		self.player = Player (self.windowId, self.ui.Sliderprogress.minimum(), self.ui.Sliderprogress.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
 
-		self.ui.buttonplayerplay.clicked.connect (self.playerworker.playclicked)
-		self.ui.buttonplayerstop.clicked.connect (self.playerworker.stopclicked)
-		self.ui.buttonplayerbackward.clicked.connect (self.playerworker.backwardclicked)
-		self.ui.buttonplayerforward.clicked.connect (self.playerworker.forwardclicked)
-		self.ui.buttonvolume.clicked.connect (self.playerworker.muteornot)
-		self.ui.Sliderprogress.valueChanged.connect (self.playerworker.sliderseekvalue)
-		self.ui.slidervolume.valueChanged.connect (self.playerworker.slidervolumevalue)
+		self.ui.buttonplayerplay.clicked.connect (self.player.playclicked)
+		self.ui.buttonplayerstop.clicked.connect (self.player.stopclicked)
+		self.ui.buttonplayerbackward.clicked.connect (self.player.backwardclicked)
+		self.ui.buttonplayerforward.clicked.connect (self.player.forwardclicked)
+		self.ui.buttonvolume.clicked.connect (self.player.muteornot)
+		self.ui.Sliderprogress.valueChanged.connect (self.player.sliderseekvalue)
+		self.ui.slidervolume.valueChanged.connect (self.player.slidervolumevalue)
 
-		self.playerworker.playurisignal.connect (self.playerworker.playuri)
-		self.playerworker.updatelabelduration.connect (self.updatelabelduration)
-		self.playerworker.updatesliderseek.connect (self.updatesliderseek)
-		self.playerworker.updateslidervolume.connect (self.updateslidervolume)
-		self.playerworker.setbuttonplay.connect (self.playersetbuttonplay)
-		self.playerworker.setbuttonpause.connect (self.playersetbuttonpause)
+		self.player.playurisignal.connect (self.player.playuri)
+		self.player.updatelabelduration.connect (self.updatelabelduration)
+		self.player.updatesliderseek.connect (self.updatesliderseek)
+		self.player.updateslidervolume.connect (self.updateslidervolume)
+		self.player.setbuttonplay.connect (self.playersetbuttonplay)
+		self.player.setbuttonpause.connect (self.playersetbuttonpause)
 
-		self.player.started.connect (self.playerworker.startworker)
-		self.playerworker.finished.connect (self.player.quit)
-		self.playerworker.finished.connect (self.playerworker.deleteLater)
-		self.player.finished.connect (self.player.deleteLater)
+		self.player.startworker()
 
-		QtGui.qApp.aboutToQuit.connect (self.player.quit)
-		QtGui.qApp.aboutToQuit.connect (self.player.wait)
-
-		self.player.start()
-
-		self.timer = QtCore.QTimer()
-		self.timer.timeout.connect (self.delayedplayuri)
-		self.timer.setSingleShot (True)
-		self.timer.start (1000)
+		self.player.playurisignal.emit (self.examfile)
 
 		self.ui.label_3.setText (QtCore.QFileInfo (self.examfile).fileName())
 		self.ui.label_3.setAlignment (QtCore.Qt.AlignHCenter)
 
 		self.ui.lineeditduration.setEnabled (False)
-
-	@QtCore.Slot()
-	def delayedplayuri (self):
-		print "timer"
-		self.playerworker.playurisignal.emit (self.examfile)
 
 	@QtCore.Slot (unicode)
 	def updatelabelduration (self, text):
@@ -115,6 +98,23 @@ class MergeExam (QtGui.QDialog):
 	@QtCore.Slot()
 	def playersetbuttonpause (self):
 		self.ui.buttonplayerplay.setIcon (QtGui.QIcon (':/images/pause2.png'))
+
+	@QtCore.Slot()
+	def on_buttonminimize_clicked (self):
+		self.showMinimized()
+
+	@QtCore.Slot()
+	def on_buttonmaximize_clicked (self):
+		if (self.isMaximized()):
+			self.ui.buttonmaximize.setIcon (QtGui.QIcon (':/images/maximize.png'))
+			self.showNormal()
+		else:
+			self.ui.buttonmaximize.setIcon (QtGui.QIcon (':/images/restore.png'))
+			self.showMaximized()
+
+	@QtCore.Slot()
+	def on_buttonclose_clicked (self):
+		self.accept()
 
 	def mouseMoveEvent (self, event):
 		super (MergeExam, self).mouseMoveEvent (event)

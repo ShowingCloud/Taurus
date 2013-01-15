@@ -6,6 +6,9 @@
 		<file>images/China Mobile icon.png</file>
 		<file>images/China Mobile.png</file>
 		<file>images/cnmobile.png</file>
+		<file>images/convertcancel.png</file>
+		<file>images/convertconvert.png</file>
+		<file>images/convertplus.png</file>
 		<file>images/delete.png</file>
 		<file>images/down.png</file>
 		<file>images/filmleft.png</file>
@@ -28,6 +31,9 @@
 		<file>images/previous.png</file>
 		<file>images/restore.png</file>
 		<file>images/round.png</file>
+		<file>images/savebrowse.png</file>
+		<file>images/savecancel.png</file>
+		<file>images/savesave.png</file>
 		<file>images/stop.png</file>
 		<file>images/strongvolume.png</file>
 		<file>images/transparent.png</file>

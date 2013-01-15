@@ -25,10 +25,20 @@ class LoginList (QtGui.QDialog):
 		self.rpcworker.checkloginsignal.connect (self.login)
 		self.rpcworker.checkloginfinished.connect (self.rpc.quit)
 		self.rpcworker.checkloginfinished.connect (self.rpcworker.deleteLater)
+		self.rpc.finished.connect (self.rpc.deleteLater)
 		self.rpc.start()
 		self.rpcworker.startchecklogin.emit (username, password)
 
-		self.ui.progressBar.setValue (50)
+		self.progress = 0
+		self.ui.progressBar.setValue (self.progress)
+		self.timer = QtCore.QTimer()
+		self.timer.timeout.connect (self.setprogressbar)
+		self.timer.start (100)
+
+	@QtCore.Slot()
+	def setprogressbar (self):
+		self.progress += 1
+		self.ui.progressBar.setValue (self.progress)
 
 	@QtCore.Slot (list)
 	def login (self, ret):

@@ -361,13 +361,13 @@ class Ui_MainWindow(object):
         self.buttonsave.setStyleSheet("QPushButton{background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(147,147,147, 255),  stop:1  rgba(51,51, 51, 255));\n"
 "color: rgb(255,255,255); \n"
 "border-radius: 6px;\n"
-"font: bold 14px;}\n"
+"font: 14px;}\n"
 "QPushButton::hover{\n"
 "background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255,253,252, 255),  stop:1 rgba(255,215,170, 255));\n"
 "color: rgb(255,255,255);\n"
 "border:outset;\n"
 "border-radius: 6px;\n"
-"font: bold 14px;\n"
+"font: 14px;\n"
 "}\n"
 "")
         self.buttonsave.setObjectName("buttonsave")
@@ -377,13 +377,13 @@ class Ui_MainWindow(object):
 "color: rgb(255,255,255);\n"
 "border:outset;\n"
 "border-radius: 6px;\n"
-"font: bold 14px;}\n"
+"font: 14px;}\n"
 "QPushButton::hover{\n"
 "background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255,253,252, 255),  stop:1 rgba(255,215,170, 255));\n"
 "color: rgb(255,255,255);\n"
 "border:outset;\n"
 "border-radius: 6px;\n"
-"font: bold 14px;\n"
+"font: 14px;\n"
 "}\n"
 "")
         self.buttonpreview.setObjectName("buttonpreview")
@@ -393,13 +393,13 @@ class Ui_MainWindow(object):
 "color: rgb(255,255,255);\n"
 "border:outset;\n"
 "border-radius: 6px;\n"
-"font: bold 14px;}\n"
+"font: 14px;}\n"
 "QPushButton::hover{\n"
 "background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255,253,252, 255),  stop:1 rgba(255,215,170, 255));\n"
 "color: rgb(255,255,255);\n"
 "border:outset;\n"
 "border-radius: 6px;\n"
-"font: bold 14px;\n"
+"font: 14px;\n"
 "}")
         self.buttoncancelbrowse.setObjectName("buttoncancelbrowse")
         self.verticalLayout_6.addWidget(self.groupBox_7)
@@ -517,7 +517,7 @@ class Ui_MainWindow(object):
         self.buttonvideointercept.setMaximumSize(QtCore.QSize(16777215, 38))
         self.buttonvideointercept.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(114, 114,114, 255),  stop:1 rgba(201, 201,201, 255));\n"
 "color: rgb(255, 255, 255);\n"
-"font: bold 11pt \"SimSun\";"
+"font: 12pt \"SimSun\";"
 "border:outset")
         self.buttonvideointercept.setObjectName("buttonvideointercept")
         self.buttonvideomerge = QtGui.QPushButton(self.groupBox_9)
@@ -529,7 +529,7 @@ class Ui_MainWindow(object):
         self.buttonvideomerge.setSizePolicy(sizePolicy)
         self.buttonvideomerge.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(117,117,117, 255),  stop:0.954802 rgba(26,26, 26, 255));\n"
 "border:outset;"
-"font: bold 11pt \"SimSum\";"
+"font: 12pt \"SimSum\";"
 "color: rgb(204, 204, 204);")
         self.buttonvideomerge.setObjectName("buttonvideomerge")
         self.gridLayout_12.addWidget(self.groupBox_9, 0, 0, 1, 1)	
@@ -845,7 +845,7 @@ class Ui_MainWindow(object):
         font.setItalic(False)
         font.setBold(False)
         self.labeloutputset.setFont(font)
-        self.labeloutputset.setStyleSheet("font: 13pt \"SimHei\";")
+        self.labeloutputset.setStyleSheet("font: bold 13pt \"SimHei\";")
         self.labeloutputset.setObjectName("labeloutputset")
         self.labelsaveto = QtGui.QLabel(self.groupBox_11)
         self.labelsaveto.setGeometry(QtCore.QRect(6, 80, 61, 21))
@@ -921,7 +921,7 @@ class Ui_MainWindow(object):
         self.buttonvideointerceptpage.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(117,117,117, 255),  stop:0.954802 rgba(26,26, 26, 255));\n"
 "border:outset;\n"
 "color: rgb(204, 204, 204);\n"
-"font: bold 11pt \"SimSun\";")
+"font: 12pt \"SimSun\";")
         self.buttonvideointerceptpage.setObjectName("buttonvideointerceptpage")
 	self.horizontalLayout_13.addWidget(self.buttonvideointerceptpage)
         self.buttonvideomergepage = QtGui.QPushButton(self.groupBox_12)
@@ -929,7 +929,7 @@ class Ui_MainWindow(object):
         self.buttonvideomergepage.setMaximumSize(QtCore.QSize(137, 38))
         self.buttonvideomergepage.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(114, 114,114, 255),  stop:1 rgba(201, 201,201, 255));\n"
 "color: rgb(255, 255, 255);\n"
-"font: bold 11pt \"SimSun\";"
+"font: 12pt \"SimSun\";"
 "border:outset")
         self.buttonvideomergepage.setObjectName("buttonvideomergepage")
         self.horizontalLayout_13.addWidget(self.buttonvideomergepage)
@@ -1013,12 +1013,16 @@ class Ui_MainWindow(object):
         self.mergeview.setObjectName("mergeview")
 	self.mergeviewheader = QtGui.QHeaderView (QtCore.Qt.Horizontal, self.mergeview)
         self.mergeviewheader.setStyleSheet("\n"
-"QHeaderView::section {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 255), stop:1 rgba(164, 164, 164, 255));\n"
+"QHeaderView::section {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(150, 150, 150, 255), stop:1 rgba(202,202,202, 255));\n"
 "height: 30px;\n"
 "border-bottom-width:1px;\n"
 "border-right-width:1px;\n"
+"border-color:rgb(102,102,102);"
 "border-style:outset;}\n")
-	self.mergeview.setHeader (self.mergeviewheader)
+        self.mergeviewheader.setDefaultAlignment (QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.mergeviewheader.setDefaultSectionSize (200)
+        self.mergeviewheader.setStretchLastSection (True)
+        self.mergeview.setHeader (self.mergeviewheader)
         self.verticalLayout_12.addWidget(self.mergeview)
         self.labelmerge = QtGui.QLabel(self.tab_2)
         self.labelmerge.setStyleSheet("background-color:white;\n"
@@ -1208,14 +1212,21 @@ class Ui_MainWindow(object):
         self.gridLayout_18.setObjectName("gridLayout_18")
         self.transview = QtGui.QTreeView(self.page_2)
         self.transview.setStyleSheet("\n"
-"QHeaderView::section:{background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 255), stop:1 rgba(164, 164, 164, 255));\n"
-"height: 30px;\n"
-"border-bottom-width:1px;\n"
-"border-style:outset;\n"
-"};\n"
 "background-color: rgb(255, 255, 255);")
         self.transview.setObjectName("transview")
-	self.gridLayout_18.addWidget(self.transview, 0, 1, 1, 1)
+        self.transviewheader = QtGui.QHeaderView (QtCore.Qt.Horizontal, self.transview)
+        self.transviewheader.setStyleSheet("\n"
+"QHeaderView::section {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(150, 150, 150, 255), stop:1 rgba(202,202,202, 255));\n"
+"height: 30px;\n"
+"border-bottom-width:1px;\n"
+"border-right-width:1px;\n"
+"border-color:rgb(102,102,102);"
+"border-style:outset;}\n")
+        self.transviewheader.setDefaultAlignment (QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.transviewheader.setDefaultSectionSize (170)
+        self.transviewheader.setStretchLastSection (True)
+        self.transview.setHeader (self.transviewheader)
+        self.gridLayout_18.addWidget(self.transview, 0, 1, 1, 1)
         self.gridLayout_17.addLayout(self.gridLayout_18, 1, 1, 1, 1)
         self.gridLayout_17.setColumnStretch(0, 159)
         self.gridLayout_17.setColumnStretch(1, 691)
@@ -1295,7 +1306,7 @@ class Ui_MainWindow(object):
         self.labelstarttime.setText(QtGui.QApplication.translate("MainWindow", "起 始 时 间：", None, QtGui.QApplication.UnicodeUTF8))
         self.labelendtime.setText(QtGui.QApplication.translate("MainWindow", "结 束 时 间：", None, QtGui.QApplication.UnicodeUTF8))
         self.labellastsave.setText(QtGui.QApplication.translate("MainWindow", "上次保存文件：", None, QtGui.QApplication.UnicodeUTF8))
-        self.labellastrecordtime.setText(QtGui.QApplication.translate("MainWindow", "00:00:00 — 00:05:31", None, QtGui.QApplication.UnicodeUTF8))
+        self.labellastrecordtime.setText(QtGui.QApplication.translate("MainWindow", "00:00:00 -- 00:05:31", None, QtGui.QApplication.UnicodeUTF8))
         self.labellastsavefile.setText(QtGui.QApplication.translate("MainWindow", "秦时明月", None, QtGui.QApplication.UnicodeUTF8))
         self.checkboxleadertitle.setText(QtGui.QApplication.translate("MainWindow", "片头标题", None, QtGui.QApplication.UnicodeUTF8))
         self.buttonvideointercept.setText(QtGui.QApplication.translate("MainWindow", "视频截取", None, QtGui.QApplication.UnicodeUTF8))

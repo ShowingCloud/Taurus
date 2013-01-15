@@ -4,8 +4,8 @@ from PySide import QtCore, QtGui
 
 import time, sys
 
-from Frontend import LoginList
-from UI import Ui_Login, Ui_loginlist
+from UI import Ui_Login
+from Frontend import ForgetPassword
 
 
 class Login (QtGui.QDialog):
@@ -48,8 +48,8 @@ class Login (QtGui.QDialog):
 
 	@QtCore.Slot()
 	def on_buttonforgetpassword_clicked (self):
-		msg = QtGui.QMessageBox()
-		msg.setInformativeText (self.tr ("To contact the administrator for password reset, please dial 0592-XXXXXXXX or send mail to admin@139.com."))
+		msg = ForgetPassword()
+		msg.move (self.pos() + self.rect().center() - msg.rect().center())
 		msg.exec_()
 
 	def resizeEvent (self, event):
