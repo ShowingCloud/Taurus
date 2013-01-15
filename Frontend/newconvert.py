@@ -20,7 +20,7 @@ class NewConvert (QtGui.QDialog):
 		self.setWindowIcon (QtGui.QIcon (':/images/icon.png'))
 
 		self.transferpath = lasttransferpath
-		if os.path.isdir (lasttransferpath):
+		if lasttransferpath and os.path.isdir (lasttransferpath):
 			self.ui.lineeditoutputroute.setText (lasttransferpath)
 
 		self.files = []
@@ -30,7 +30,7 @@ class NewConvert (QtGui.QDialog):
 		self.ui.treeView.setAlternatingRowColors (True)
 		self.ui.treeView.setItemDelegate (NewConvertDelegate (self))
 		self.ui.treeView.itemDelegate().deleterow.connect (self.deleterow)
-#		self.ui.treeView.setEditTriggers (QtGui.QAbstractItemView.SelectedClicked)
+		self.ui.treeView.setEditTriggers (QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked)
 		self.ui.treeView.header().setDefaultAlignment (QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
 		self.ui.treeView.header().setDefaultSectionSize (320)
 		self.ui.treeView.header().setStretchLastSection (True)
@@ -45,7 +45,7 @@ class NewConvert (QtGui.QDialog):
 		newpath = QtGui.QFileDialog.getExistingDirectory (self, self.tr ("Select output directory"),
 				self.ui.lineeditoutputroute.text())
 		if not os.path.isdir (newpath):
-			newpath = ""
+			return
 
 		self.transferpath = newpath
 		self.ui.lineeditoutputroute.setText (newpath)
@@ -109,7 +109,7 @@ class NewConvert (QtGui.QDialog):
 			self.reject()
 			QtGui.qApp.quit()
 		elif event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
-			self.accept()
+			self.buttonconvert.clicked.emit()
 
 	def mouseMoveEvent (self, event):
 		super (NewConvert, self).mouseMoveEvent (event)

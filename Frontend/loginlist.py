@@ -35,18 +35,30 @@ class LoginList (QtGui.QDialog):
 		self.timer.timeout.connect (self.setprogressbar)
 		self.timer.start (100)
 
+		self.edited = 0
+		self.transferred = 0
+		self.lastsplittime = None
+		self.lastsplitfile = None
+		self.lastsplitpath = None
+		self.lastmergepath = None
+		self.lasttransferpath = None
+
 	@QtCore.Slot()
 	def setprogressbar (self):
 		self.progress += 1
 		self.ui.progressBar.setValue (self.progress)
 
-	@QtCore.Slot (list)
+		if self.progress > 200:
+			self.ui.progressBar.setValue (0)
+			self.reject()
+
+	@QtCore.Slot (tuple)
 	def login (self, ret):
-		success, edited, transfered, lastsplittime, lastsplitfile, lastsplitpath, lastmergepath, lasttransferpath = ret
+		success, edited, transferred, lastsplittime, lastsplitfile, lastsplitpath, lastmergepath, lasttransferpath = ret
 		if success:
 			self.ui.progressBar.setValue (100)
 			self.edited = edited
-			self.transfered = transfered
+			self.transferred = transferred
 			self.lastsplittime = lastsplittime
 			self.lastsplitfile = lastsplitfile
 			self.lastsplitpath = lastsplitpath

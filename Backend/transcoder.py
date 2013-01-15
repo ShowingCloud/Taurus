@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import gobject, gst
+import gst
 from PySide import QtCore, QtGui
 
 from Toolkit import RPCHandler
@@ -8,23 +8,23 @@ from Toolkit import RPCHandler
 
 class Transcoder (QtCore.QObject):
 
-	updatemodel = QtCore.Signal (int, list)
+	updatemodel = QtCore.Signal (int, tuple)
 	playsignal = QtCore.Signal()
 	pausesignal = QtCore.Signal()
 	removesignal = QtCore.Signal()
+	startnewtransfer = QtCore.Signal (unicode, unicode)
+	finished = QtCore.Signal()
 
 	def __init__ (self, srcfile, dstfile, username, path, row, parent = None):
 
 		QtCore.QObject.__init__ (self, parent)
-		gobject.threads_init()
-		self.mainloop = gobject.MainLoop()
-		self.context = self.mainloop.get_context()
 
 		self.srcfile = srcfile
 		self.dstfile = dstfile
 		self.row = row
 		self.username = username
 		self.path = path
+		self.parent = parent
 
 		QtGui.qApp.aboutToQuit.connect (self.remove)
 
@@ -59,23 +59,21 @@ class Transcoder (QtCore.QObject):
 		self.__apad = queuea.get_pad ("sink")
 		self.__vpad = queuev.get_pad ("sink")
 
-		self.pipeline.add (source, decoder, queuea, queuev, audioenc, videoenc, muxer, progress, sink, colorspace, caps, videoscale, videorate, audioconv, colorspace2)
+		self.pipeline.add (source, decoder, queuea, queuev, audioenc, videoenc, muxer, progress, sink,
+				colorspace, caps, videoscale, videorate, audioconv, colorspace2)
 		gst.element_link_many (source, decoder)
 		gst.element_link_many (queuev, videoscale, videorate, colorspace, caps, colorspace2, videoenc, muxer)
 		gst.element_link_many (queuea, audioconv, audioenc, muxer)
 		gst.element_link_many (muxer, progress, sink)
 
 		self.bus = self.pipeline.get_bus()
-		self.bus.add_signal_watch()
-		self.bus.enable_sync_message_emission()
-		self.bus.connect ("message", self.on_message)
-		self.bus.connect ("sync-message::element", self.on_sync_message)
 
-		self.timer = QtCore.QTimer()
-		self.timer.timeout.connect (lambda: self.context.pending() and self.context.iteration())
-		self.timer.start (100)
+		self.contexttimer = QtCore.QTimer()
+		self.contexttimer.timeout.connect (self.on_timeout)
+		self.contexttimer.start (100)
 
 		self.pipeline.set_state (gst.STATE_PLAYING)
+		self.updatemodel.emit (self.row, (None, self.tr ("Transcoding...")))
 
 		self.sendnewtransferred (self.username, self.path)
 
@@ -83,13 +81,34 @@ class Transcoder (QtCore.QObject):
 		self.rpcworker = RPCHandler()
 		self.rpc = QtCore.QThread()
 		self.rpcworker.moveToThread (self.rpc)
-		self.rpcworker.startnewtransferred.connect (self.rpcworker.newtransferred)
 		self.rpcworker.newtransferredfinished.connect (self.rpc.quit)
 		self.rpcworker.newtransferredfinished.connect (self.rpcworker.deleteLater)
 		self.rpc.finished.connect (self.rpc.deleteLater)
 		self.rpc.start()
 
-		self.rpcworker.startnewtransferred.emit (self.username, self.path)
+		self.startnewtransfer.connect (self.rpcworker.newtransferred)
+		self.startnewtransfer.connect (self.parent.newtransferred)
+		self.startnewtransfer.emit (self.username, self.path)
+
+	def on_timeout (self):
+
+		while True:
+			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_ELEMENT, 0)
+			if not message:
+				break
+
+			if message.type == gst.MESSAGE_EOS:
+				self.pipeline.set_state(gst.STATE_NULL)
+				self.updatemodel.emit (self.row, (100, self.tr ("Finished")))
+				self.finished.emit()
+			elif message.type == gst.MESSAGE_ERROR:
+				self.pipeline.set_state(gst.STATE_NULL)
+				err, debug = message.parse_error()
+				print 'Error: %s' % err, debug
+				self.finished.emit()
+			elif message.type == gst.MESSAGE_ELEMENT:
+				if message.structure.get_name() == "progress":
+					self.updatemodel.emit (self.row, (message.structure ['percent'], None))
 
 	@QtCore.Slot()
 	def play (self):
@@ -104,30 +123,14 @@ class Transcoder (QtCore.QObject):
 	@QtCore.Slot()
 	def remove (self):
 		self.pipeline.set_state (gst.STATE_NULL)
-
-	def on_message (self, bus, message):
-		if message.type == gst.MESSAGE_EOS:
-			self.pipeline.set_state(gst.STATE_NULL)
-			self.updatemodel.emit (self.row, (100, self.tr ("Finished")))
-		elif message.type == gst.MESSAGE_ERROR:
-			self.pipeline.set_state(gst.STATE_NULL)
-			err, debug = message.parse_error()
-			print 'Error: %s' % err, debug
-		elif message.type == gst.MESSAGE_ELEMENT:
-			if message.structure.get_name() == "progress":
-				self.updatemodel.emit (self.row, (message.structure ['percent'], None))
-
-	def on_sync_message (self, bus, message):
-		if message.structure is None:
-			return
-		message_name = message.structure.get_name()
+		self.finished.emit()
 
 	def cb_pad_added (self, element, pad, islast):
-	    caps = pad.get_caps()
-	    name = caps[0].get_name()
-	    if 'audio' in name:
-	        if not self.__apad.is_linked(): # Only link once
-	            pad.link (self.__apad)
-	    elif 'video' in name:
-	        if not self.__vpad.is_linked():
-	            pad.link (self.__vpad)
+		caps = pad.get_caps()
+		name = caps[0].get_name()
+		if 'audio' in name:
+			if not self.__apad.is_linked():
+				pad.link (self.__apad)
+		elif 'video' in name:
+			if not self.__vpad.is_linked():
+				pad.link (self.__vpad)

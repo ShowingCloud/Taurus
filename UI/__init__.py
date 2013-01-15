@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from UI.ui_mergererror import Ui_mergererror
+from UI.ui_loaderror import Ui_loaderror
 from UI.ui_loginlist import Ui_loginlist
 from UI.ui_login import Ui_Login
 from UI.ui_mainwindow import Ui_MainWindow

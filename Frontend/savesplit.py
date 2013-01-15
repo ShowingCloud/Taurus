@@ -19,10 +19,11 @@ class SaveSplit (QtGui.QDialog):
 		self.setWindowIcon (QtGui.QIcon (':/images/icon.png'))
 
 		self.splitpath = path
-		if os.path.isdir (path):
+		if path and os.path.isdir (path):
 			self.ui.lineeditcaveroute.setText (path)
 
 		self.splitfile = None
+		self.totranscode = False
 
 	@QtCore.Slot()
 	def on_buttonbrowse_clicked (self):
@@ -45,6 +46,8 @@ class SaveSplit (QtGui.QDialog):
 
 		if self.splitpath == "" or self.splitfile == "":
 			return
+
+		self.totranscode = self.ui.checkBox.isChecked()
 
 		self.accept()
 
@@ -69,7 +72,7 @@ class SaveSplit (QtGui.QDialog):
 			self.reject()
 			QtGui.qApp.quit()
 		elif event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
-			self.accept()
+			self.buttonsave.clicked.emit()
 
 	def mouseMoveEvent (self, event):
 		super (SaveSplit, self).mouseMoveEvent (event)

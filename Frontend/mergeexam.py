@@ -32,6 +32,8 @@ class MergeExam (QtGui.QDialog):
 		pythonapi.PyCObject_AsVoidPtr.argtypes = [py_object]
 		self.windowId = pythonapi.PyCObject_AsVoidPtr (winid)
 
+		self.ui.frameaudio.mouseReleaseEvent = self.frameMouseRelease
+
 		self.player = Player (self.windowId, self.ui.Sliderprogress.minimum(), self.ui.Sliderprogress.maximum(), self.ui.slidervolume.minimum(), self.ui.slidervolume.maximum())
 
 		self.ui.buttonplayerplay.clicked.connect (self.player.playclicked)
@@ -49,8 +51,10 @@ class MergeExam (QtGui.QDialog):
 		self.player.setbuttonplay.connect (self.playersetbuttonplay)
 		self.player.setbuttonpause.connect (self.playersetbuttonpause)
 
-		self.player.startworker()
+		self.player.quitworkersignal.connect (self.player.quitworker)
+		self.player.quitworkersignal.connect (self.player.deleteLater)
 
+		self.player.startworker()
 		self.player.playurisignal.emit (self.examfile)
 
 		self.ui.label_3.setText (QtCore.QFileInfo (self.examfile).fileName())
@@ -114,11 +118,27 @@ class MergeExam (QtGui.QDialog):
 
 	@QtCore.Slot()
 	def on_buttonclose_clicked (self):
+		self.player.quitworkersignal.emit()
 		self.accept()
 
 	def mouseMoveEvent (self, event):
 		super (MergeExam, self).mouseMoveEvent (event)
+
 		if self.leftclicked == True:
+
+			if self.isMaximized():
+				self.ui.buttonmaximize.setIcon (QtGui.QIcon (':/images/maximize.png'))
+
+				origsize = self.rect().size()
+				self.showNormal()
+				newsize = self.rect().size()
+
+				xfactor = float (newsize.width()) / origsize.width()
+				yfactor = float (newsize.height()) / origsize.height()
+
+				self.startdragging.setX (self.startdragging.x() * xfactor)
+				self.startdragging.setY (self.startdragging.y() * yfactor)
+
 			self.move (event.globalPos() - self.startdragging)
 
 	def mousePressEvent (self, event):
@@ -135,6 +155,12 @@ class MergeExam (QtGui.QDialog):
 	def mouseDoubleClickEvent (self, event):
 		super (MergeExam, self).mouseDoubleClickEvent (event)
 		self.on_buttonmaximize_clicked()
+
+	def frameMouseRelease (self, event):
+		super (MergeExam, self).mouseReleaseEvent (event)
+		if event.button() == QtCore.Qt.LeftButton and event.globalPos() == self.clickedpos:
+			self.leftclicked = False
+			self.ui.buttonplayerplay.clicked.emit()
 
 	def resizeEvent (self, event):
 		pixmap = QtGui.QPixmap (self.size())

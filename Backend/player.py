@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import threading, time
-import gst, gobject
+import gst
 from PySide import QtCore, QtGui
 
 from Toolkit import time2str, str2time
@@ -17,13 +17,11 @@ class Player (QtCore.QObject):
 	setbuttonplay = QtCore.Signal()
 	setbuttonpause = QtCore.Signal()
 	setloopsignal = QtCore.Signal (unicode, unicode)
+	quitworkersignal = QtCore.Signal()
 
 	def __init__ (self, windowId, seekmin, seekmax, volmin, volmax, parent = None):
 
 		QtCore.QObject.__init__ (self, parent)
-		gobject.threads_init()
-		self.mainloop = gobject.MainLoop()
-		self.context = self.mainloop.get_context()
 
 		self.windowId = windowId
 		self.seekmin = seekmin
@@ -60,7 +58,6 @@ class Player (QtCore.QObject):
 		self.bus.enable_sync_message_emission()
 		self.bus.add_signal_watch()
 		self.bus.connect ("sync-message::element", self.on_sync_message)
-		self.bus.connect ("message", self.on_message)
 
 		self.updatelabelduration.emit ("00:00.000 / 00:00.000")
 		self.updatesliderseek.emit (self.seekmin)
@@ -87,6 +84,7 @@ class Player (QtCore.QObject):
 		self.player.set_property ("uri", "file:///" + filepath)
 		self.hasmediafile = True
 
+		self.updatethreadtimer.setInterval (1)
 		self.player.set_state (gst.STATE_PLAYING)
 		self.stopped = False
 		self.setbuttonpause.emit()
@@ -148,8 +146,36 @@ class Player (QtCore.QObject):
 		except:
 			pass
 
-		while self.context.pending():
-			self.context.iteration()
+		while True:
+			message = self.bus.poll (gst.MESSAGE_EOS | gst.MESSAGE_ERROR | gst.MESSAGE_STATE_CHANGED
+					| gst.MESSAGE_SEGMENT_DONE, 0)
+			if not message:
+				break
+
+			if message.type == gst.MESSAGE_EOS:
+				self.stopped = True
+				self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
+				self.player.set_state (gst.STATE_NULL)
+				self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+				self.updatesliderseek.emit (self.seekmin)
+				self.setbuttonplay.emit()
+			elif message.type == gst.MESSAGE_ERROR:
+				self.stopped = True
+				self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
+				self.player.set_state (gst.STATE_NULL)
+				self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
+				self.updatesliderseek.emit (self.seekmin)
+				err, debug = message.parse_error()
+				print 'Error: %s' % err, debug
+				self.setbuttonplay.emit()
+			elif message.type == gst.MESSAGE_STATE_CHANGED:
+				old, new, pending = message.parse_state_changed()
+				if old == gst.STATE_READY and new == gst.STATE_PAUSED and message.src == self.player:
+					self.seek (self.startpos, self.stoppos)
+			elif message.type == gst.MESSAGE_SEGMENT_DONE:
+				src = self.player.get_property ("source")
+				pad = src.get_pad ('src')
+				pad.push_event (gst.event_new_eos())
 
 		return True
 
@@ -237,46 +263,20 @@ class Player (QtCore.QObject):
 	def quitworker (self):
 		self.player.set_state (gst.STATE_NULL)
 
-	def on_message (self, bus, message):
-		if message.type == gst.MESSAGE_EOS:
-			self.stopped = True
-			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-			self.player.set_state (gst.STATE_NULL)
-			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
-			self.updatesliderseek.emit (self.seekmin)
-			self.setbuttonplay.emit()
-		elif message.type == gst.MESSAGE_ERROR:
-			self.stopped = True
-			self.player.seek_simple (gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, self.startpos)
-			self.player.set_state (gst.STATE_NULL)
-			self.updatelabelduration.emit ("00:00.000 / " + self.dur_str)
-			self.updatesliderseek.emit (self.seekmin)
-			err, debug = message.parse_error()
-			print 'Error: %s' % err, debug
-			self.setbuttonplay.emit()
-		elif message.type == gst.MESSAGE_STATE_CHANGED:
-			old, new, pending = message.parse_state_changed()
-			if old == gst.STATE_READY and new == gst.STATE_PAUSED and message.src == self.player:
-				self.seek (self.startpos, self.stoppos)
-		elif message.type == gst.MESSAGE_SEGMENT_DONE:
-			src = self.player.get_property ("source")
-			pad = src.get_pad ('src')
-			pad.push_event (gst.event_new_eos())
-
 	def on_sync_message (self, bus, message):
 		if message.structure is None:
 			return
 		message_name = message.structure.get_name()
 		if message_name == "prepare-xwindow-id":
 			imagesink = message.src
-			imagesink.set_property("force-aspect-ratio", True)
+			imagesink.set_property ("force-aspect-ratio", True)
 			imagesink.set_xwindow_id (self.windowId)
 
 	def cb_pad_added (self, element, pad, islast):
 		caps = pad.get_caps()
 		name = caps[0].get_name()
 		if 'audio' in name:
-			if not self.__apad.is_linked(): # Only link once
+			if not self.__apad.is_linked():
 				pad.link (self.__apad)
 		elif 'video' in name:
 			if not self.__vpad.is_linked():

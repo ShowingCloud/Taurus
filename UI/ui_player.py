@@ -103,14 +103,15 @@ class Ui_player(object):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.groupBox = QtGui.QGroupBox(player)
-        self.groupBox.setMaximumSize(QtCore.QSize(130, 16777215))
+	self.groupBox.setMinimumSize(QtCore.QSize(140, 16777215))
+        self.groupBox.setMaximumSize(QtCore.QSize(140, 16777215))
         self.groupBox.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(97,97,97, 255), stop:0.954802 rgba(52,52, 52, 255));\n"
 "border:outset\n"
 "")
         self.groupBox.setTitle("")
         self.groupBox.setObjectName("groupBox")
         self.lineeditduration = QtGui.QLineEdit(self.groupBox)
-        self.lineeditduration.setGeometry(QtCore.QRect(4, 6, 113, 20))
+        self.lineeditduration.setGeometry(QtCore.QRect(1, 6, 139, 20))
         self.lineeditduration.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.lineeditduration.setObjectName("lineeditduration")
         self.horizontalLayout.addWidget(self.groupBox)

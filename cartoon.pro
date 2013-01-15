@@ -7,6 +7,11 @@ SOURCES += cartoon.py \
 	Frontend/forgetpassword.py \
 	Frontend/mergeexam.py \
 	Frontend/newconvert.py \
+	Frontend/loaderror.py \
+	Frontend/passworderror.py \
+	Frontend/savesplit.py \
+	Frontend/mergererror.py \
+	Frontend/loaderror.py \
 	\
 	Backend/videosplitter.py \
 	Backend/__init__.py \

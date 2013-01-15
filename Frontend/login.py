@@ -81,9 +81,6 @@ class Login (QtGui.QDialog):
 				if self.ui.lineeditcpid.text() == "":
 					self.twinkle (self.ui.labelcpid, self.ui.lineeditcpid)
 					return True
-#				elif self.ui.lineeditpassword.text() == "":
-#					self.twinkle (self.ui.labelpassword, self.ui.lineeditpassword)
-#					return False
 
 		elif obj == self.ui.lineeditpassword:
 			if event.type() == QtCore.QEvent.KeyPress:
@@ -114,11 +111,11 @@ class Login (QtGui.QDialog):
 		shining = "background-color: rgb(102, 102, 102); font: 12pt \"SimHei\"; color: rgb(102, 102, 102);"
 
 		for i in xrange (3):
-#			label.setStyleSheet (shining)
+
 			lineedit.setStyleSheet (shining)
 			self.repaint()
 			time.sleep (0.01)
-#			label.setStyleSheet (labelorig)
+
 			lineedit.setStyleSheet (lineeditorig)
 			self.repaint()
 			time.sleep (0.01)

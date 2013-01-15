@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from Frontend.mergererror import MergerError
+from Frontend.loaderror import LoadError
 from Frontend.passworderror import PasswordError
 from Frontend.forgetpassword import ForgetPassword
 from Frontend.savesplit import SaveSplit

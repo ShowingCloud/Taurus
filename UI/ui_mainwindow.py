@@ -135,7 +135,7 @@ class Ui_MainWindow(object):
         self.groupBox.setSizePolicy(sizePolicy)
         self.groupBox.setMaximumSize(QtCore.QSize(16777215, 105))
         self.groupBox.setAutoFillBackground(False)
-	self.groupBox.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,stop:0 rgba(83,83,83,255),stop:0.5 rgba(125,125,125,255),stop:1 rgba(83,83,83,255));"
+        self.groupBox.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,stop:0 rgba(83,83,83,255),stop:0.5 rgba(125,125,125,255),stop:1 rgba(83,83,83,255));"
 "border-top-width: 1px;"
 #"border-color: rgba (0, 0, 0, 255);"
 "border-style: outset;")
@@ -143,7 +143,7 @@ class Ui_MainWindow(object):
         self.groupBox.setObjectName("groupBox")
         self.gridLayout_2 = QtGui.QGridLayout(self.groupBox) 
         self.gridLayout_2.setSpacing(0)
-	self.gridLayout_2.setContentsMargins(0, 2, 0, 2)
+        self.gridLayout_2.setContentsMargins(0, 2, 0, 2)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setSpacing(0)
@@ -243,7 +243,7 @@ class Ui_MainWindow(object):
         self.groupBox_2.setMaximumSize(QtCore.QSize(267, 130))
         self.groupBox_2.setStyleSheet("border:outset;\n"
 "background-color: rgba(255, 255, 255, 0);")
-	self.groupBox_2.setTitle("")
+        self.groupBox_2.setTitle("")
         self.groupBox_2.setObjectName("groupBox_2")
         self.labelhello = QtGui.QLabel(self.groupBox_2)
         self.labelhello.setGeometry(QtCore.QRect(12, 12, 199, 16))
@@ -252,21 +252,21 @@ class Ui_MainWindow(object):
 "background-color: rgba(255, 255, 255, 0);")
         self.labelhello.setObjectName("labelhello")
         self.labelworldcup = QtGui.QLabel(self.groupBox_2)
-        self.labelworldcup.setGeometry(QtCore.QRect(8, 28, 77, 67))
+        self.labelworldcup.setGeometry(QtCore.QRect(4, 28, 77, 67))
         self.labelworldcup.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.labelworldcup.setText("")
         self.labelworldcup.setPixmap(QtGui.QPixmap(":/images/world cup.png"))
         self.labelworldcup.setScaledContents(True)
         self.labelworldcup.setObjectName("labelworldcup")
         self.labelvideoedit = QtGui.QLabel(self.groupBox_2)
-        self.labelvideoedit.setGeometry(QtCore.QRect(86, 42, 137, 19))
+        self.labelvideoedit.setGeometry(QtCore.QRect(84, 42, 167, 19))
         self.labelvideoedit.setStyleSheet("color: rgb(255, 255, 255);\n"
 "background-color: rgba(255, 255, 255, 0);"
 "\n"
 "font: bold 10pt \"SimSun\";")
         self.labelvideoedit.setObjectName("labelvideoedit")
         self.labelvideoconvert = QtGui.QLabel(self.groupBox_2)
-        self.labelvideoconvert.setGeometry(QtCore.QRect(86, 68, 137, 16))
+        self.labelvideoconvert.setGeometry(QtCore.QRect(84, 68, 167, 16))
         self.labelvideoconvert.setStyleSheet("color: rgb(255, 255, 255);\n"
 "background-color: rgba(255, 255, 255, 0);"
 "font: bold 10pt \"SimSun\";")
@@ -463,12 +463,14 @@ class Ui_MainWindow(object):
 "background-color: rgba(255, 255, 255, 0);")
         self.labellastsave.setObjectName("labellastsave")
         self.labellastrecordtime = QtGui.QLabel(self.groupBox_8)
-        self.labellastrecordtime.setGeometry(QtCore.QRect(129, 78, 119, 20))
+        self.labellastrecordtime.setGeometry(QtCore.QRect(120, 78, 151, 20))
         self.labellastrecordtime.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
 "border:outset;")
         self.labellastrecordtime.setObjectName("labellastrecordtime")
         self.labellastsavefile = QtGui.QLabel(self.groupBox_8)
-        self.labellastsavefile.setGeometry(QtCore.QRect(129, 99, 119, 20))
+        self.labellastsavefile.setGeometry(QtCore.QRect(120, 102, 151, 41))
+        self.labellastsavefile.setWordWrap(True)
+        self.labellastsavefile.setAlignment (QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
         self.labellastsavefile.setStyleSheet("background-color: rgba(255, 255, 255, 0);border:outset;")
         self.labellastsavefile.setObjectName("labellastsavefile")
         self.lineeditstarttime = QtGui.QLineEdit(self.groupBox_8)
@@ -566,7 +568,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, -1)
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.groupBox_6 = QtGui.QGroupBox(self.groupBox_5)
-	self.groupBox_6.setMinimumSize(QtCore.QSize(140, 16777215))
+        self.groupBox_6.setMinimumSize(QtCore.QSize(140, 16777215))
         self.groupBox_6.setMaximumSize(QtCore.QSize(140, 16777215))
         self.groupBox_6.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(97,97,97, 255), stop:0.954802 rgba(52,52, 52, 255));\n"
 "border:outset\n"
@@ -785,7 +787,7 @@ class Ui_MainWindow(object):
         self.gridLayout_11.addLayout(self.gridLayout_10, 1, 0, 1, 1)
         self.groupBox_10 = QtGui.QGroupBox(self.groupBox_5)
         self.groupBox_10.setMinimumSize(QtCore.QSize(0, 38))
-	self.groupBox_10.setStyleSheet("background-color: rgb(0, 0, 0);""border:outset")
+        self.groupBox_10.setStyleSheet("background-color: rgb(0, 0, 0);""border:outset")
         self.groupBox_10.setObjectName("groupBox_10")
         self.groupBox_10.setObjectName("groupBox_10")
         self.horizontalLayout_14 = QtGui.QHBoxLayout(self.groupBox_10)
@@ -794,7 +796,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_14.addItem(spacerItem)	
         self.labelfilmtitle = QtGui.QLabel(self.groupBox_10)
         self.labelfilmtitle.setMinimumSize(QtCore.QSize(200, 0))
-	self.labelfilmtitle.setStyleSheet("color: rgb(255, 255, 255);")
+        self.labelfilmtitle.setStyleSheet("color: rgb(255, 255, 255);")
         self.labelfilmtitle.setText("")
         self.labelfilmtitle.setObjectName("labelfilmtitle")
         self.horizontalLayout_14.addWidget(self.labelfilmtitle)
@@ -907,7 +909,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_12.setObjectName("verticalLayout_12")
         self.groupBox_12 = QtGui.QGroupBox(self.tab_2)
         self.groupBox_12.setMinimumSize(QtCore.QSize(0, 38))
-	self.groupBox_12.setMaximumSize(QtCore.QSize(16777215, 38))
+        self.groupBox_12.setMaximumSize(QtCore.QSize(16777215, 38))
         self.groupBox_12.setStyleSheet("background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(117,117,117, 255),  stop:0.954802 rgba(26,26, 26, 255));"
 "border:outset;")
         self.groupBox_12.setObjectName("groupBox_12")
@@ -923,7 +925,7 @@ class Ui_MainWindow(object):
 "color: rgb(204, 204, 204);\n"
 "font: 12pt \"SimSun\";")
         self.buttonvideointerceptpage.setObjectName("buttonvideointerceptpage")
-	self.horizontalLayout_13.addWidget(self.buttonvideointerceptpage)
+        self.horizontalLayout_13.addWidget(self.buttonvideointerceptpage)
         self.buttonvideomergepage = QtGui.QPushButton(self.groupBox_12)
         self.buttonvideomergepage.setMinimumSize(QtCore.QSize(0, 38))
         self.buttonvideomergepage.setMaximumSize(QtCore.QSize(137, 38))
@@ -1005,13 +1007,13 @@ class Ui_MainWindow(object):
         self.mergeview.setFocusPolicy(QtCore.Qt.NoFocus)
         self.mergeview.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
         self.mergeview.setLayoutDirection(QtCore.Qt.LeftToRight)
-	self.mergeview.setStyleSheet("\n"
+        self.mergeview.setStyleSheet("\n"
 "background-color:white;\n"
 "border:outset;\n")
         self.mergeview.setAutoScroll(False)
         self.mergeview.setAutoScrollMargin(16)
         self.mergeview.setObjectName("mergeview")
-	self.mergeviewheader = QtGui.QHeaderView (QtCore.Qt.Horizontal, self.mergeview)
+        self.mergeviewheader = QtGui.QHeaderView (QtCore.Qt.Horizontal, self.mergeview)
         self.mergeviewheader.setStyleSheet("\n"
 "QHeaderView::section {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(150, 150, 150, 255), stop:1 rgba(202,202,202, 255));\n"
 "height: 30px;\n"
@@ -1202,7 +1204,7 @@ class Ui_MainWindow(object):
         self.listWidget.setStyleSheet("border:outset;\n"
 "font: 12pt;\n"
 "background-color:  qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(228, 228, 228, 255),  stop:0.954802 rgba(136, 136, 136, 255));")
-	self.listWidget.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.listWidget.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.listWidget.setObjectName("listWidget")
         QtGui.QListWidgetItem(self.listWidget)
         QtGui.QListWidgetItem(self.listWidget)
@@ -1301,7 +1303,7 @@ class Ui_MainWindow(object):
         self.labelvideoconvert.setText(QtGui.QApplication.translate("MainWindow", "视频转码：共计 203 集", None, QtGui.QApplication.UnicodeUTF8))
         self.buttonsave.setText(QtGui.QApplication.translate("MainWindow", "保存", None, QtGui.QApplication.UnicodeUTF8))
         self.buttonpreview.setText(QtGui.QApplication.translate("MainWindow", "预览", None, QtGui.QApplication.UnicodeUTF8))
-	self.buttoncancelbrowse.setText(QtGui.QApplication.translate("MainWindow", "取消预览", None, QtGui.QApplication.UnicodeUTF8))
+        self.buttoncancelbrowse.setText(QtGui.QApplication.translate("MainWindow", "取消预览", None, QtGui.QApplication.UnicodeUTF8))
         self.labellastrecord.setText(QtGui.QApplication.translate("MainWindow", "上次截取记录：", None, QtGui.QApplication.UnicodeUTF8))
         self.labelstarttime.setText(QtGui.QApplication.translate("MainWindow", "起 始 时 间：", None, QtGui.QApplication.UnicodeUTF8))
         self.labelendtime.setText(QtGui.QApplication.translate("MainWindow", "结 束 时 间：", None, QtGui.QApplication.UnicodeUTF8))
@@ -1328,12 +1330,12 @@ class Ui_MainWindow(object):
         self.buttontranspause.setText(QtGui.QApplication.translate("MainWindow", "暂停", None, QtGui.QApplication.UnicodeUTF8))
         self.buttontransdelete.setText(QtGui.QApplication.translate("MainWindow", "删除", None, QtGui.QApplication.UnicodeUTF8))
         self.labelallmission.setText(QtGui.QApplication.translate("MainWindow", "   全部任务", None, QtGui.QApplication.UnicodeUTF8))
-	__sortingEnabled = self.listWidget.isSortingEnabled()
+        __sortingEnabled = self.listWidget.isSortingEnabled()
         self.listWidget.setSortingEnabled(False)
         self.listWidget.item(0).setText(QtGui.QApplication.translate("MainWindow", "      进行中", None, QtGui.QApplication.UnicodeUTF8))
         self.listWidget.item(1).setText(QtGui.QApplication.translate("MainWindow", "      已完成", None, QtGui.QApplication.UnicodeUTF8))
         self.listWidget.setSortingEnabled(__sortingEnabled)
         self.labelversions.setText(QtGui.QApplication.translate("MainWindow", " 当前版本 V1.0 Beta", None, QtGui.QApplication.UnicodeUTF8))
-	self.labelsidechinamobile.setText(QtGui.QApplication.translate("MainWindow", "中国移动手机动漫基地", None, QtGui.QApplication.UnicodeUTF8))
+        self.labelsidechinamobile.setText(QtGui.QApplication.translate("MainWindow", "中国移动手机动漫基地", None, QtGui.QApplication.UnicodeUTF8))
 
 import images_rc

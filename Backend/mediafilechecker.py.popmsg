@@ -1,0 +1,57 @@
+#!/usr/bin/python
+
+import os
+import gobject, gst
+from PySide import QtCore, QtGui
+
+
+class MediaFileChecker (QtCore.QObject):
+
+	discoveredsignal = QtCore.Signal (int, dict)
+
+	def __init__ (self, mediafile, row, parent = None):
+		QtCore.QObject.__init__ (self, parent)
+		gobject.threads_init()
+		self.mainloop = gobject.MainLoop()
+		self.context = self.mainloop.get_context()
+
+		self.mediafile = mediafile
+		self.row = row
+
+	@QtCore.Slot()
+	def startworker (self):
+
+		if not os.path.isfile (self.mediafile):
+			self.discoveredsignal.emit (self.row, {})
+			self.finished.emit()
+			return
+
+		self.pipeline = gst.Pipeline ("pipeline")
+		source = gst.element_factory_make ("uridecodebin")
+		source.set_property ("uri", "file:///" + self.mediafile)
+		source.connect ("pad-added", self.on_new_pad)
+		fakesink = gst.element_factory_make ("fakesink")
+		self.sink = fakesink.get_pad ("sink")
+
+		self.pipeline.add (source, fakesink)
+#		gst.element_link_many (source, fakesink)
+
+		self.pipeline.set_state (gst.STATE_PAUSED)
+
+		self.bus = self.pipeline.get_bus()
+
+		contexttimer = QtCore.QTimer()
+		contexttimer.timeout.connect (self.on_timeout)
+		contexttimer.start (100)
+
+	def on_timeout (self):
+		if self.context.pending():
+			self.context.iteration()
+
+		msg = self.bus.timed_pop (gst.MESSAGE_ASYNC_DONE | gst.MESSAGE_TAG | gst.MESSAGE_ERROR, gst.CLOCK_TIME_NONE)
+
+		print msg.parse_tag()
+
+	def on_new_pad (self, element, pad):
+		if not self.sink.is_linked():
+			pad.link (self.sink)

@@ -1,56 +1,14 @@
 #!/usr/bin/python
 
-import sys, os, time
-from datetime import datetime
+import sys
 from PySide import QtCore, QtGui
 
 import SimpleXMLRPCServer
 import hashlib
 
-from sqlalchemy import Column, Integer, Sequence, String, DateTime, create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
-import pyodbc
-
 from UI import images_rc
+from Toolkit import CartoonServer
 import Translations
-
-
-Engine = create_engine ('mssql://CartoonAdmin:CartoonServerPassword@61.147.79.115/CartoonServer', module = pyodbc)
-base = declarative_base()
-
-class User (base):
-	__tablename__ = 'T_Users'
-
-	id = Column (Integer, Sequence ('user_id_seq'), primary_key = True)
-	Username = Column (String, unique = True)
-	Password = Column (String)
-	LastLogin = Column (DateTime)
-	NumEdited = Column (Integer)
-	NumTransfered = Column (Integer)
-	LastSplitTime = Column (String)
-	LastSplitFile = Column (String)
-	LastSplitPath = Column (String)
-	LastMergePath = Column (String)
-	LastTransferPath = Column (String)
-
-	def __init__ (self, username, password, lastlogin, numedited, numtransfered, lastsplittime, lastsplitfile,
-			lastsplitpath, lastmergepath, lasttransferpath):
-		self.Username = username
-		self.Password = password
-		self.LastLogin = lastlogin
-		self.NumEdited = numedited
-		self.NumTransfered = numtransfered
-		self.LastSplitTime = lastsplittime
-		self.LastSplitFile = lastsplitfile
-		self.LastSplitPath = lastsplitpath
-		self.LastMergePath = lastmergepath
-		self.LastTransferPath = lasttransferpath
-
-	def __repr__ (self):
-		return "<User ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.Username, self.Password,
-				self.LastLogin, self.NumEdited, self.NumTransfered, self.LastSplitTime, self.LastSplitFile,
-				self.LastMergePath, self.LastTransferPath)
 
 
 class ServerTray (QtCore.QObject):
@@ -99,86 +57,6 @@ class RPCServerHandler (QtCore.QObject):
 	def quitworker (self):
 		print "quit worker"
 		self.server.shutdown()
-
-
-class CartoonServer (object):
-
-	def __init__ (self, parent = None):
-		self.Session = scoped_session (sessionmaker (bind = Engine, autocommit = True))
-
-	def CheckLogin (self, username, password):
-
-		session = self.Session()
-
-		with session.begin():
-
-			q = session.query (User).filter_by (Username = username)
-			if not q.count() == 1:
-				return (False, None, None, None, None, None, None, None)
-
-			record = q.first()
-			pswd = record.Password
-			if not pswd == password:
-				return (False, None, None, None, None, None, None, None)
-
-			edited = record.NumEdited
-			transfered = record.NumTransfered
-			lastsplittime = record.LastSplitTime
-			lastsplitfile = record.LastSplitFile
-			lastsplitpath = record.LastSplitPath
-			lastmergepath = record.LastMergePath
-			lasttransferpath = record.LastTransferPath
-
-			record.LastLogin = datetime.now()
-			return (True, edited, transfered, lastsplittime, lastsplitfile, lastsplitpath,
-					lastmergepath, lasttransferpath)
-
-	def NewMerged (self, username, path):
-
-		session = self.Session()
-
-		with session.begin():
-
-			q = session.query (User).filter_by (Username = username)
-			if not q.count() == 1:
-				return False
-
-			record = q.first()
-			record.NumEdited += 1
-			record.LastMergePath = path
-			return True
-
-	def NewSplitted (self, username, time, filename, path):
-
-		session = self.Session()
-
-		with session.begin():
-
-			q = session.query (User).filter_by (Username = username)
-			if not q.count() == 1:
-				return False
-
-			record = q.first()
-			record.NumEdited += 1
-			record.LastSplitTime = time
-			record.LastSplitFile = filename
-			record.LastSplitPath = path
-			return True
-
-	def NewTransferred (self, username, path):
-
-		session = self.Session()
-
-		with session.begin():
-
-			q = session.query (User).filter_by (Username = username)
-			if not q.count() == 1:
-				return False
-
-			record = q.first()
-			record.NumTransfered += 1
-			record.LastTransferPath = path
-			return True
 
 
 if __name__ == "__main__":
