@@ -53,7 +53,7 @@ caps.set_property ('caps', gst.caps_from_string ("video/x-raw-rgb, width=640, he
 audioconv = gst.element_factory_make ("audioconvert")
 audioenc = gst.element_factory_make ("ffenc_aac")
 audioenc.set_property ('bitrate', 128000)
-videoenc = gst.element_factory_make ("ffenc_mpeg4")
+videoenc = gst.element_factory_make ("ffenc_x264")
 videoenc.set_property ('bitrate', 1024000)
 muxer = gst.element_factory_make ("mp4mux")
 sink = gst.element_factory_make ("filesink")
@@ -67,7 +67,7 @@ __vpad = queuev.get_pad ("sink")
 
 pipeline.add (source, decoder, queuea, queuev, audioenc, videoenc, muxer, progress, sink, colorspace, caps, videoscale, colorspace2, videorate, audioconv)
 gst.element_link_many (source, decoder)
-gst.element_link_many (queuev, colorspace, videoscale, videorate, caps, colorspace2, videoenc, muxer)
+gst.element_link_many (queuev, videoscale, videorate, colorspace, caps, colorspace2, videoenc, muxer)
 gst.element_link_many (queuea, audioconv, audioenc, muxer)
 gst.element_link_many (muxer, progress, sink)
 
