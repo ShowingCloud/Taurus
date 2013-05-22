@@ -5,32 +5,45 @@ class MediaTypes (object):
 
 	@staticmethod
 	def operation (x, y, op):
+		ret = False
+
 		if op == 'not':
-			return x is not y
+			ret = x is not y
 		elif op == 'is':
-			return x is y
+			ret = x is y
 		elif op == 'gt':
-			return x > y
+			ret = x > y
 		elif op == 'ge':
-			return x >= y
+			ret = x >= y
 		elif op == 'eq':
-			return x == y
+			ret = x == y
 		elif op == 'lt':
-			return x < y
+			ret = x < y
 		elif op == 'le':
-			return x <= y
+			ret = x <= y
 
-	thresholdop = {'muxer': ('is',), 'videooutcaps': ('is',), 'audiooutcaps': ('is',), 'videowidth': ('is', 'lt'),
-			'videoheight': ('is', 'lt'), 'length': ('is', 'le'), 'videoframerate': ('is', 'lt'),
-			'videobitrate': ('not', 'lt'), 'audiobitrate': ('not', 'lt')}
+		return ret
 
-	thresholdvalue = {'muxer': (None,), 'videooutcaps': (None,), 'audiooutcaps': (None,), 'videowidth': (None, 640),
-			'videoheight': (None, 480), 'length': (None, 0), 'videoframerate': (None, 25),
-			'videobitrate': (None, 3500000), 'audiobitrate': (None, 120000)}
+	@staticmethod
+	def multioper (x, y, op):
+		ret = []
 
-	thresholdrela = {'muxer': None, 'videooutcaps': None, 'audiooutcaps': None, 'videowidth': False,
-			'videoheight': False, 'length': False, 'videoframerate': True,
-			'videobitrate': True, 'audiobitrate': True} # True for ALL, False for ANY (to get a FALSE return)
+		for i, _ in enumerate (op):
+			ret.append (MediaTypes.operation (x, y[i], op[i]))
+
+		return ret
+
+	thresholds = (
+			{'name': 'muxer',			'op': ('is',),			'value': (None,),			'relation': all},
+			{'name': 'videooutcaps',	'op': ('is',),			'value': (None,),			'relation': all},
+			{'name': 'audiooutcaps',	'op': ('is',),			'value': (None,),			'relation': all},
+			{'name': 'videowidth',		'op': ('is', 'lt'),		'value': (None, 640),		'relation': any},
+			{'name': 'videoheight',		'op': ('is', 'lt'),		'value': (None, 480),		'relation': any},
+			{'name': 'length',			'op': ('is', 'le'),		'value': (None, 0),			'relation': any},
+			{'name': 'videoframerate',	'op': ('is', 'lt'),		'value': (None, 25),		'relation': all},
+			{'name': 'videobitrate',	'op': ('not', 'lt'),	'value': (None, 3500000),	'relation': all},
+			{'name': 'audiobitrate',	'op': ('not', 'lt'),	'value': (None, 120000),	'relation': all}
+			)
 
 	encapsulation = {
 			'video/mpeg': {'muxer': 'mpegtsmux', 'demuxer': 'ffdemux_mpeg', 'videoencoder': 'ffenc_mpeg2video', 'audioencoder': 'ffenc_mp2'},
@@ -56,20 +69,9 @@ class MediaTypes (object):
 	@staticmethod
 	def validate (params):
 
-		for key in MediaTypes.thresholdop.keys():
-
-			if MediaTypes.thresholdrela[key]:
-				if all ([
-					MediaTypes.operation (params.get (key), MediaTypes.thresholdvalue[key][op], MediaTypes.thresholdop[key][op])
-					for op in xrange (len (MediaTypes.thresholdop[key]))
-					]):
-					return False
-			else:
-				if any ([
-					MediaTypes.operation (params.get (key), MediaTypes.thresholdvalue[key][op], MediaTypes.thresholdop[key][op])
-					for op in xrange (len (MediaTypes.thresholdop[key]))
-					]):
-					return False
+		for dic in MediaTypes.thresholds:
+			if dic['relation'] (MediaTypes.multioper (params.get (dic['name']), dic['value'], dic['op'])):
+				return False
 
 		return True
 
