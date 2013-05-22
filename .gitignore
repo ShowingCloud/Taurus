@@ -33,3 +33,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# (Protentially) Proprietary UI Design
+UI_theirs
+UI_theirs.old

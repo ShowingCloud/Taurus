@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-PROGRAM_OFFLINE = True
+PROGRAM_OFFLINE = False
 ALLOW_NOWDG_LOGIN = True
 ALLOW_NOWDG_REG = True
 USE_THEIR_UI = True
